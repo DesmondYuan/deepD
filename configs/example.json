@@ -1,0 +1,17 @@
+{
+    "expr_name": "Example",
+    "train_dataset": "data/Dataset1.csv",
+    "test_dataset": "data/Dataset1.csv",
+    "layers": [
+        [978, 1000],
+        [1000, 500],
+        [500, 200],
+        [200, 100],
+        [100, 50]
+    ],
+    "max_iteration": 10000,
+    "activation": "tf.nn.leaky_relu",
+    "learning_rate": 1e-3,
+    "l1": 1e-6,
+    "batch_size": 4096
+}

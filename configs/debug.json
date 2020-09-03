@@ -1,0 +1,13 @@
+{
+    "expr_name": "Debug",
+    "train_dataset": "data/Dataset1.csv",
+    "test_dataset": "data/Dataset2.csv",
+    "layers": [
+        [978, 2]
+    ],
+    "max_iteration": 10,
+    "activation": "tf.nn.leaky_relu",
+    "learning_rate": 1e-3,
+    "l1": 1e-7,
+    "batch_size": 4
+}
