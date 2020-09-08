@@ -12,6 +12,7 @@ class DeepD:
         self.aF = eval(config['activation'])
         self.lr = config['learning_rate']
         self.l1 = config['l1']
+        self.l2 = config['l2']
         self.batch_size = config['batch_size']
         self.reg_params, self.export_params = [], {}
         self.encoders = self.build_encoders(self.x)
@@ -66,9 +67,11 @@ class DeepD:
         return decoders
 
     def get_loss(self, x, xhat):
-        w = tf.reduce_sum([tf.reduce_sum(tf.abs(p)) for p in self.reg_params])
+        n_params = sum([np.prod(p.shape) for p in self.reg_params]).value
+        l1 = self.l1 * tf.reduce_sum([tf.reduce_sum(tf.abs(p)) for p in self.reg_params]) / n_params
+        l2 = self.l2 * tf.reduce_sum([tf.reduce_sum(tf.square(p)) for p in self.reg_params]) / n_params
         mse = tf.reduce_mean(tf.square(x - xhat))
-        loss = mse + self.l1 * w
+        loss = mse + self.l1 + l2
         return mse, loss
 
     def train(self, data, n_iter_buffer=5, n_iter=1000, n_iter_patience=100, verbose=1):
@@ -87,7 +90,7 @@ class DeepD:
         idx_iter = 0
         x_train_gold, x_valid_gold, x_test_gold = (data[key] for key in ['train', 'valid', 'test'])
         # Training on train set batches with early stopping on valid set batched
-        print('Training on train set...')
+        print('[Training] Training on train set...')
         while True:
             if idx_iter > n_iter or n_unchanged > n_iter_patience:
                 break
@@ -113,7 +116,7 @@ class DeepD:
                 n_unchanged += 1
 
         # Evaluation on entire valid set
-        print('Evaluating on valid set... {}'.format(x_valid_gold.shape))
+        print('[Training] Evaluating on valid set... {}'.format(x_valid_gold.shape))
         t0 = time.clock()
         loss_valid_i, mse_valid_i = sess.run((model.loss, model.mse), feed_dict={self.x: x_valid_gold})
         screenshot.log(filename="training.log", iteration=(-1, -1),
@@ -121,7 +124,7 @@ class DeepD:
                        loss=(np.nan, loss_valid_i, np.nan, mse_valid_i, np.nan))
 
         # Evaluation on test set
-        print('Evaluating on test set... {}'.format(x_test_gold.shape))
+        print('[Training] Evaluating on test set... {}'.format(x_test_gold.shape))
         t0 = time.clock()
         mse_test = sess.run(model.mse, feed_dict={self.x: x_test_gold})
         screenshot.log(filename="training.log", iteration=(-1, -1),
