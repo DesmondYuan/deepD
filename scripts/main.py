@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from DeepD.model import DeepD
 from DeepD.utils import md5
+from DeepD.data import random_partition
 
 
 parser = argparse.ArgumentParser(description='DeepD main script')
@@ -18,17 +19,12 @@ cfg = json.load(open(args.experiment_config_path, 'r'))
 
 # Loading datasets
 print("[Main] Loading datasets...")
-train_set = pd.read_csv(cfg['train_dataset'], header=None).values[:, 1:]  # drop the annotation column 0
-test_set = pd.read_csv(cfg['test_dataset'], header=None).values[:, 1:]
-train_set, test_set = preprocess(train_set, test_set)
-
-print("[Main] Creating validation set...")
-np.random.seed(args.random_seed)
-n_samples = train_set.shape[0]
-pos = np.random.choice(range(n_samples), n_samples, replace=False)
-train_pos, valid_pos = pos[:int(0.7 * n_samples)], pos[int(0.7 * n_samples):]
-data, labels, classes = [{'train': train_set[key][train_pos], 'valid': train_set[key][valid_pos], 'test': test_set[key],
-                         'export': test_set[key]} for key in ['value', 'full_label', 'class_annot']]
+train_df = pd.read_csv(cfg['train_dataset'], index_col=0)
+test_df = pd.read_csv(cfg['test_dataset'], index_col=0)
+train_set, valid_set, test_set, valid_pos = random_partition(train_df=train_df, test_df=test_df, seed=args.random_seed,
+                                                             annotation_col=cfg['annotation_col'],
+                                                             validation_ratio=cfg['validation_ratio'])
+datasets = {'train': train_set, 'valid': valid_set, 'test': test_set}
 print("[Main] All datasets are ready...")
 
 # Prepareing working dir

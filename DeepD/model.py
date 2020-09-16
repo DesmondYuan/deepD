@@ -134,7 +134,7 @@ class DeepD:
         # Save model
         screenshot.save_params()
         screenshot.save_model('./model.ckpt')
-        z, xhat = screenshot.save_output(data['export'])
+        z, xhat = screenshot.save_output(data['test']['value'])
         return z, xhat
 
 
