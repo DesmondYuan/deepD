@@ -1,7 +1,10 @@
 {
-    "expr_name": "Example_transformed",
-    "train_dataset": "data/Dataset1_transformed.csv",
-    "test_dataset": "data/Dataset1_transformed.csv",
+    "expr_name": "Example_GENT",
+    "train_dataset": "data/Dataset1_GENT_L1000_U133Plus2.experiment.csv",
+    "test_dataset": "data/Dataset1_GENT_L1000_U133Plus2.withheld.csv",
+    "annotation_col": "nc_label",
+    "validation_ratio": 0.3,
+    "n_genes": 978,
     "layers": [
         [978, 1000],
         [1000, 500],
@@ -10,9 +13,9 @@
         [100, 50]
     ],
     "max_iteration": 10000,
-    "activation": "tf.nn.tanh",
-    "learning_rate": 1e-1,
+    "activation": "tf.nn.relu",
+    "learning_rate": 1e-3,
     "l1": 1e-3,
     "l2": 1e-1,
-"batch_size": 4096
+"batch_size": 1024
 }

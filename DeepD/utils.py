@@ -71,7 +71,7 @@ class Screenshot(dict):
 
     def save_model(self, path):
         tmp = self.model.saver.save(self.model.sess, path)
-        print("Model saved in path: %s" % tmp)
+        print("Model saved in path: %s" % os.getcwd() + tmp[1:])
 
     def log(self, filename, iteration, loss, unchanged, t):
         idx_iter, n_iter = iteration

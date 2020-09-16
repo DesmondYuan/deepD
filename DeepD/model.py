@@ -74,7 +74,7 @@ class DeepD:
         loss = mse + self.l1 + l2
         return mse, loss
 
-    def train(self, data, n_iter_buffer=5, n_iter=1000, n_iter_patience=100, verbose=1):
+    def train(self, data, n_iter_buffer=5, n_iter=1000, n_iter_patience=500, verbose=1):
         """
         :param data: (dict) training data dictionary
         :param n_iter_buffer: (int) moving average window width for loss
@@ -88,7 +88,7 @@ class DeepD:
         screenshot = utils.Screenshot(self, n_iter_buffer, verbose=verbose)
         n_unchanged = 0
         idx_iter = 0
-        x_train_gold, x_valid_gold, x_test_gold = (data[key] for key in ['train', 'valid', 'test'])
+        x_train_gold, x_valid_gold, x_test_gold = (data[key]['value'] for key in ['train', 'valid', 'test'])
         # Training on train set batches with early stopping on valid set batched
         print('[Training] Training on train set...')
         while True:
@@ -103,7 +103,7 @@ class DeepD:
             # record training
             loss_valid_i, mse_valid_i = sess.run((model.loss, model.mse), feed_dict={self.x: x_valid_gold[pos_valid]})
             new_loss = screenshot.avg_n_iters_loss(loss_valid_i)
-            screenshot.log(filename="training.log", iteration=(idx_iter, n_iter),
+            screenshot.log(filename="training.csv", iteration=(idx_iter, n_iter),
                            unchanged=(n_unchanged, n_iter_patience), t=time.clock() - t0,
                            loss=(loss_train_i, loss_valid_i, mse_train_i, mse_valid_i, np.nan))
 
@@ -119,7 +119,7 @@ class DeepD:
         print('[Training] Evaluating on valid set... {}'.format(x_valid_gold.shape))
         t0 = time.clock()
         loss_valid_i, mse_valid_i = sess.run((model.loss, model.mse), feed_dict={self.x: x_valid_gold})
-        screenshot.log(filename="training.log", iteration=(-1, -1),
+        screenshot.log(filename="training.csv", iteration=(-1, -1),
                        unchanged=(-1, -1), t=time.clock() - t0,
                        loss=(np.nan, loss_valid_i, np.nan, mse_valid_i, np.nan))
 
@@ -127,7 +127,7 @@ class DeepD:
         print('[Training] Evaluating on test set... {}'.format(x_test_gold.shape))
         t0 = time.clock()
         mse_test = sess.run(model.mse, feed_dict={self.x: x_test_gold})
-        screenshot.log(filename="training.log", iteration=(-1, -1),
+        screenshot.log(filename="training.csv", iteration=(-1, -1),
                        unchanged=(-1, -1), t=time.clock() - t0,
                        loss=(np.nan, np.nan, np.nan, np.nan, mse_test))
 

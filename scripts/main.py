@@ -28,33 +28,33 @@ datasets = {'train': train_set, 'valid': valid_set, 'test': test_set}
 print("[Main] All datasets are ready...")
 
 # Prepareing working dir
+print("[Main] Initializing working directory...")
 run_id = cfg['expr_name'] + '_' + md5(str(cfg))
 wdr = 'results/{}/seed_{}'.format(run_id, args.random_seed)
 shutil.rmtree(wdr, ignore_errors=True)
 os.makedirs(wdr, exist_ok=True)
 os.chdir(wdr)
-pd.DataFrame(train_pos).to_csv("train_set.pos")
 pd.DataFrame(valid_pos).to_csv("valid_set.pos")
-print("[Main] Starting model construction at {}.".format(wdr))
+valid_set['full_label'].to_csv("valid_set.labels.csv")
 
 # Constructing DeepD model
-for key in data:
-    assert data[key].shape[1] == cfg['layers'][0][0]
+print("[Main] Starting model construction at {}.".format(wdr))
+for key in datasets:
+    assert datasets[key]['value'].shape[1] == cfg['layers'][0][0]
 print("[Main] Constructing DeepD model...")
 model = DeepD(cfg, seed=args.random_seed)
 print("[Main] Training DeepD model...")
-z, xhat = model.train(data, n_iter=cfg['max_iteration'], verbose=1)
+z, xhat = model.train(datasets, n_iter=cfg['max_iteration'], verbose=1)
 
 # Plotting results
 print("[Main] Plotting results...")
-plt_pos = np.random.choice(range(z.shape[0]), 1000)
-plt.subplots(figsize=[12, 6])
-plt.subplot(121)
-sns.kdeplot(data['export'][plt_pos].flatten(), xhat[plt_pos].flatten(), shade=True)
-xlim = np.quantile(data['export'][plt_pos].flatten(), (0.05, 0.95))
-plt.xlim(xlim)
-plt.ylim(xlim)
-plt.subplot(122)
+plt_pos = np.random.choice(range(z.shape[0]), 100)
+plt.subplots(figsize=[18, 6])
+plt.subplot(131)
+sns.kdeplot(x=test_set['value'][plt_pos].flatten(), y=xhat[plt_pos].flatten(), shade=True)
+plt.subplot(132)
+sns.histplot(x=test_set['value'][plt_pos].flatten(), y=xhat[plt_pos].flatten(), bins=40)
+plt.subplot(133)
 sns.heatmap(z[plt_pos], cmap='viridis')
 plt.tight_layout()
 plt.savefig("results.png")
