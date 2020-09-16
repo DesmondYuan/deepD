@@ -9,8 +9,6 @@ import seaborn as sns
 from DeepD.model import DeepD
 from DeepD.utils import md5
 from DeepD.data import random_partition
-import sys
-sys.path.append("..")
 
 
 parser = argparse.ArgumentParser(description='DeepD main script')
