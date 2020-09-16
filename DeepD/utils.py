@@ -56,7 +56,7 @@ class Screenshot(dict):
     def save_output(self, X):
         z, xhat = self.model.sess.run([self.model.encoders[-1]['tensor'], self.model.decoders[-1]['tensor']],
                                       feed_dict={self.model.encoders[0]['tensor']: X})
-        if self.verbose > 1:
+        if self.verbose > 2:
             pd.DataFrame(z).to_csv("features.csv", header=None, index=None)
             pd.DataFrame(xhat).to_csv("imputation.csv", header=None, index=None)
         return z, xhat
@@ -71,7 +71,7 @@ class Screenshot(dict):
             self[key].to_csv("best.{}.loss.{}.csv".format(key, self.loss_min))
 
     def save_model(self, path):
-        if self.verbose > 2:
+        if self.verbose > 1:
             tmp = self.model.saver.save(self.model.sess, path)
             print("[Utils] Model saved in path: %s" % os.getcwd() + tmp[1:])
 

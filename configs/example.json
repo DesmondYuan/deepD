@@ -20,6 +20,6 @@
     "l2": 1e-1,
     "optimizer": "tf.compat.v1.train.AdamOptimizer",
     "adam_momentum_beta1": 0.5,
-    "verbose": 3,
+    "verbose": 2,
     "batch_size": 8192
 }
