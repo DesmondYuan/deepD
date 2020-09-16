@@ -70,8 +70,9 @@ class Screenshot(dict):
                 self[key].to_csv("best.{}.loss.{}.csv".format(key, self.loss_min))
 
     def save_model(self, path):
-        tmp = self.model.saver.save(self.model.sess, path)
-        print("Model saved in path: %s" % os.getcwd() + tmp[1:])
+        if self.verbose > 2:
+            tmp = self.model.saver.save(self.model.sess, path)
+            print("Model saved in path: %s" % os.getcwd() + tmp[1:])
 
     def log(self, filename, iteration, loss, unchanged, t):
         idx_iter, n_iter = iteration

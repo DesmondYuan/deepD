@@ -27,13 +27,14 @@ def normalize_train_and_test(train_df, test_df, annot_col='class label', n_genes
     :param train_df: (pandas.DataFrame) training data from disk
     :param test_df: (pandas.DataFrame) test data frame from disk
     :param annot_col: (str) which column to be used as classification label
+    :param n_genes: (int) the length of feature vectors (e.g. for L1000 genes: 978)
     :return: train, test (dict, dict): processed dataset instances, each has:
             'value': (pandas.DataFrame) data matrix
             'full_label': (pandas.DataFrame) all the metadata information including classification annotations
             'class_annot': (numpy.ndarray) classification annotations
     """
-    train = preprocess_df(train_df, annot_col=annot_col, task='train_set', n_genes=978)
-    test = preprocess_df(test_df, annot_col=annot_col, task='test_set', normalize_on=train_df, n_genes=978)
+    train = preprocess_df(train_df, annot_col=annot_col, task='train_set', n_genes=n_genes)
+    test = preprocess_df(test_df, annot_col=annot_col, task='test_set', normalize_on=train_df, n_genes=n_genes)
     return train, test
 
 
@@ -75,11 +76,6 @@ def rescale_and_clip(data, scale_on=None):
         data = np.transpose(scaler.fit_transform(np.transpose(data)))
     print("[Preprocessing] Clipping...")
     clipping_thre = 1.
-    data = data - np.median(data)
-    data = 1 + np.clip(data, -clipping_thre, clipping_thre)/clipping_thre
+    data = np.clip(data, -clipping_thre, clipping_thre)/clipping_thre
     print("[Preprocessing] Dataset is ready for training DeepD...")
     return data
-# np.histogram(data, np.linspace(-1, 1, 10))
-#
-# import seaborn as sns
-# sns.histplot(data[:100].flatten())
