@@ -34,11 +34,10 @@ class Screenshot(dict):
     def __init__(self, model, n_iter_buffer, verbose=2):
         # initialize loss_min
         super().__init__()
-        self.loss_min = 1000
-        self.saved_losses = [self.loss_min]
         self.n_iter_buffer = n_iter_buffer
         self.model = model
         self.verbose = verbose
+        self.reset()
 
     def avg_n_iters_loss(self, new_loss):
         self.saved_losses.append(new_loss)
@@ -62,12 +61,14 @@ class Screenshot(dict):
             pd.DataFrame(xhat).to_csv("imputation.csv", header=None, index=None)
         return z, xhat
 
+    def check_exist_params(self):
+        return glob.glob("best.*.csv") != []
+
     def save_params(self):
-        if self.verbose > 2:
-            for file in glob.glob("best.*.csv"):
-                os.remove(file)
-            for key in self.model.export_params:
-                self[key].to_csv("best.{}.loss.{}.csv".format(key, self.loss_min))
+        for file in glob.glob("best.*.csv"):
+            os.remove(file)
+        for key in self.model.export_params:
+            self[key].to_csv("best.{}.loss.{}.csv".format(key, self.loss_min))
 
     def save_model(self, path):
         if self.verbose > 2:
@@ -98,6 +99,10 @@ class Screenshot(dict):
                        self.buffer_loss, self.loss_min, loss_test_mse, n_unchanged, n_iter_patience, t)
             log_text = ",".join([str(i) for i in content])
             f.write(log_text + '\n')
+
+    def reset(self):
+        self.loss_min = 1000
+        self.saved_losses = [self.loss_min]
 
 
 def md5(key):
