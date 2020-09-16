@@ -25,7 +25,7 @@ class TimeLogger:
     def log(self, s):
         """time log"""
         if self.step_count % self.time_logger_step == 0:
-            print("#" * 4 * self.hierachy, " ", s, "  --time elapsed: %.2f" % (time.time() - self.time))
+            print("[Utils] " + "#" * 4 * self.hierachy, " ", s, "  --time elapsed: %.2f" % (time.time() - self.time))
             self.time = time.time()
             self.step_count += 1
 
@@ -73,7 +73,11 @@ class Screenshot(dict):
     def save_model(self, path):
         if self.verbose > 2:
             tmp = self.model.saver.save(self.model.sess, path)
-            print("Model saved in path: %s" % os.getcwd() + tmp[1:])
+            print("[Utils] Model saved in path: %s" % os.getcwd() + tmp[1:])
+
+    def load_model(self, path):
+        tmp = self.model.saver.restore(self.model.sess, path)
+        print("[Utils] Model restored from path: %s" % os.getcwd() + tmp[1:])
 
     def log(self, filename, iteration, loss, unchanged, t):
         idx_iter, n_iter = iteration

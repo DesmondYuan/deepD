@@ -112,7 +112,9 @@ class DeepD:
         model, sess, screenshot = self, self.sess, self.screenshot
         if self.screenshot:
             print("[Training] Pretrained params detected. Skipping...")
-            return 0
+            screenshot.load_model("pretrain.model")
+            return 1
+
         x_train_gold, x_valid_gold, x_test_gold = (data[key]['value'] for key in ['train', 'valid', 'test'])
         # Training on train set batches with early stopping on valid set batched
         for mse, opt_op in zip(self.pretrain_mses, self.pretrain_optimizer_ops):
@@ -141,6 +143,7 @@ class DeepD:
                     screenshot.screenshot(loss_min=new_loss)
                 else:
                     n_unchanged += 1
+            print('[Training] Saving pre-train params...')
             screenshot.save_model("pretrain.model")
             screenshot.save_params()
             screenshot.reset()
