@@ -19,5 +19,5 @@
     "l1": 1e-3,
     "l2": 1e-1,
     "verbose": 1,
-"batch_size": 4096
+    "batch_size": 8192
 }
