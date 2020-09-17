@@ -31,13 +31,13 @@ class TimeLogger:
 
 
 class Screenshot(dict):
-    def __init__(self, model, n_iter_buffer, verbose=2):
+    def __init__(self, model, n_iter_buffer, verbose=2, freq=50):
         # initialize loss_min
         super().__init__()
         self.n_iter_buffer = n_iter_buffer
         self.model = model
         self.verbose = verbose
-        self.freq = 50
+        self.freq = freq
         self.reset()
 
     def avg_n_iters_loss(self, new_loss):

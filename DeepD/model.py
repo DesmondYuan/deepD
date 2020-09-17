@@ -27,11 +27,9 @@ class DeepD:
             self.pretrain_mses = [self.get_mse(x['tensor'], xhat['tensor'])
                                   for x, xhat in zip(self.encoders[:-1], self.decoders)]
 
-        self.optimizer_op = get_optimizer(self.loss, self.lr, scope="CDAE_optimization",
-                                          optimizer=eval(config['optimizer']), beta1=config['adam_momentum_beta1'])
+        self.optimizer_op = get_optimizer(self.loss, self.lr, scope="CDAE_optimization", optimizer=config['optimizer'])
         self.pretrain_optimizer_ops = [
-            get_optimizer(mse, self.lr, scope="pretrain_opt_{}".format(k+1),
-                          optimizer=eval(config['optimizer']), beta1=config['adam_momentum_beta1'],
+            get_optimizer(mse, self.lr, scope="pretrain_opt_{}".format(k+1), optimizer=config['optimizer'],
                           var_list=tf.compat.v1.get_collection('variables', scope='Encoder_{}'.format(k+1)))
             for k, mse in enumerate(self.pretrain_mses)]
 
@@ -43,7 +41,8 @@ class DeepD:
         # xaiver_initializer = tf.compat.v1.initializers.glorot_normal(seed=seed)
         # self.sess.run(xaiver_initializer(tf.global_variables()))
         self.sess.run(tf.compat.v1.global_variables_initializer())
-        self.screenshot = utils.Screenshot(self, config['n_iter_buffer'], verbose=config['verbose'])
+        self.screenshot = utils.Screenshot(self, config['n_iter_buffer'], verbose=config['verbose'],
+                                           listen_freq=config['listen_freq'])
         np.random.seed(seed), tf.compat.v1.set_random_seed(seed)
 
     def construct_ae_layer(self, x, d_out=None, activationF=tf.tanh, weight=None, regularize=True, export=None,
@@ -215,11 +214,11 @@ class DeepD:
         return z, xhat
 
 
-def get_optimizer(loss_in, lr, optimizer=tf.compat.v1.train.AdamOptimizer, var_list=None, scope="Optimization", **args):
+def get_optimizer(loss_in, lr, optimizer="tf.compat.v1.train.AdamOptimizer({})", var_list=None, scope="Optimization"):
     if var_list is None:
         var_list = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.GLOBAL_VARIABLES)
     with tf.compat.v1.variable_scope(scope, reuse=tf.compat.v1.AUTO_REUSE):
-        opt = optimizer(lr, beta1=args['beta1'])
+        opt = eval(optimizer.format(lr))
         opt_op = opt.minimize(loss_in, var_list=var_list)
     print("[Construct] Successfully generated an operation {} for optimizing: {}.".format(opt_op.name, loss_in))
     return opt, opt_op
