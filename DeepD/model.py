@@ -121,7 +121,7 @@ class DeepD:
         x_train_gold, x_valid_gold, x_test_gold = (data[key]['value'] for key in ['train', 'valid', 'test'])
         # Training on train set batches with early stopping on valid set batched
         for mse, opt_op in zip(self.pretrain_mses, self.pretrain_optimizer_ops):
-            print('[Training] Pre-training on train set at {}...'.format(opt_op.name))
+            print('[Training] Pre-training on train set at {}...'.format(opt_op[0].name))
             n_unchanged = 0
             idx_iter = 0
             while True:
@@ -149,8 +149,8 @@ class DeepD:
             print('[Training] Saving pre-train params...')
             screenshot.save_model("pretrain.model")
             screenshot.save_params()
-            sess.run(tf.variables_initializer(opt_op[0].variables()))
-            screenshot.reset()
+            sess.run(tf.variables_initializer(opt_op[0].variables()))  # refresh optimizer states
+            screenshot.reset()  # refresh best_loss saved in screenshot
 
     def train(self, data, n_iter=1000, n_iter_patience=100):
         """
