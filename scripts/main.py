@@ -45,8 +45,8 @@ for key in datasets:
 print("[Main] Constructing DeepD model...")
 model = DeepD(cfg, seed=args.random_seed)
 print("[Main] Training DeepD model...")
-model.pretrain(datasets, n_iter=cfg['max_iteration_pretrain'])
-z, xhat = model.train(datasets, n_iter=cfg['max_iteration'])
+model.pretrain(datasets, n_iter=cfg['max_iteration_pretrain'], n_iter_patience=cfg['n_iter_patience_pretrain'])
+z, xhat = model.train(datasets, n_iter=cfg['max_iteration'], n_iter_patience=cfg['n_iter_patience_pretrain'])
 
 # Plotting results
 print("[Main] Plotting results...")
