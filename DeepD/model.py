@@ -54,7 +54,8 @@ class DeepD:
             if weight is None:
                 # xaiver = tf.glorot_normal_initializer(seed=None)
                 # weight = xaiver(shape=(d_in, d_out), dtype=tf.dtypes.float32)
-                weight = tf.Variable(tf.random.normal([d_in, d_out]), name="weight")
+                weight = tf.Variable(tf.random.unif(-np.sqrt(6/(d_in + d_out)), np.sqrt(6/(d_in + d_out)),
+                                                    [d_in, d_out]), name="weight")  # xaiver initiation
             else:
                 d_out = weight.shape[0]
                 weight = tf.transpose(weight)
