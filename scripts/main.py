@@ -16,6 +16,7 @@ parser.add_argument('-config', '--experiment_config_path', required=True, type=s
 parser.add_argument('-seed', '--random_seed', required=False, default=0, type=int, help="Random seed")
 args = parser.parse_args()
 cfg = json.load(open(args.experiment_config_path, 'r'))
+print("[Main] Experiment starts with seed={} and config={}".format(args.random_seed, cfg))
 
 # Loading datasets
 print("[Main] Loading datasets...")

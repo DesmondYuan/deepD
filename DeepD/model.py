@@ -219,6 +219,7 @@ def get_optimizer(loss_in, lr, optimizer=tf.compat.v1.train.AdamOptimizer, var_l
     with tf.compat.v1.variable_scope(scope, reuse=tf.compat.v1.AUTO_REUSE):
         opt = optimizer(lr, beta1=args['beta1'])
         opt_op = opt.minimize(loss_in, var_list=var_list)
+    print("[Construct] Successfully generated an operation {} for optimizing: {}.".format(opt_op.name, loss_in))
     return opt_op
 
 

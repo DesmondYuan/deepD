@@ -37,6 +37,7 @@ class Screenshot(dict):
         self.n_iter_buffer = n_iter_buffer
         self.model = model
         self.verbose = verbose
+        self.freq = 50
         self.reset()
 
     def avg_n_iters_loss(self, new_loss):
@@ -73,11 +74,11 @@ class Screenshot(dict):
     def save_model(self, path):
         if self.verbose > 1:
             tmp = self.model.saver.save(self.model.sess, path)
-            print("[Utils] Model saved in path: %s" % os.getcwd() + tmp[1:])
+            print("[Utils] Model saved in path: %s" % os.getcwd() + '/' + tmp)
 
     def load_model(self, path):
         tmp = self.model.saver.restore(self.model.sess, path)
-        print("[Utils] Model restored from path: %s" % os.getcwd() + tmp[1:])
+        print("[Utils] Model restored from path: %s" % os.getcwd() + '/' + tmp)
 
     def log(self, filename, iteration, loss, unchanged, t):
         idx_iter, n_iter = iteration
@@ -90,7 +91,8 @@ class Screenshot(dict):
                        "best:{:1.6f}\tTolerance: {}/{}\tTime_elapsed: {}" \
                 .format(idx_iter, n_iter, loss_train_i, self.buffer_loss, self.loss_min,
                         n_unchanged, n_iter_patience, t)
-            print(log_text)
+            if self.counter % self.freq == 0:
+                print(log_text)
 
         if not os.path.exists(filename):
             with open(filename, 'a') as f:
@@ -104,9 +106,12 @@ class Screenshot(dict):
             log_text = ",".join([str(i) for i in content])
             f.write(log_text + '\n')
 
+        self.counter += 1
+
     def reset(self):
         self.loss_min = 1000
         self.saved_losses = [self.loss_min]
+        self.counter = 0
 
 
 def md5(key):
