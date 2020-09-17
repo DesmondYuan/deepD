@@ -22,6 +22,6 @@
     "optimizer": "tf.compat.v1.train.AdamOptimizer",
     "adam_momentum_beta1": 0.1,
     "verbose": 2,
-    "pre_batch_size": 1024,
+    "pretrain_batch_size": 1024,
     "batch_size": 16384
 }
