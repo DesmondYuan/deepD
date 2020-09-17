@@ -108,7 +108,7 @@ class DeepD:
         l1 = self.l1 * tf.reduce_sum([tf.reduce_sum(tf.abs(p)) for p in self.reg_params]) / n_params
         l2 = self.l2 * tf.reduce_sum([tf.reduce_sum(tf.square(p)) for p in self.reg_params]) / n_params
         mse = self.get_mse(x, xhat)
-        loss = tf.add(mse, self.l1 + l2, name='loss')
+        loss = tf.add(mse, l1 + l2, name='loss')
         return mse, loss
 
     def pretrain(self, data, n_iter=1000, n_iter_patience=100):
