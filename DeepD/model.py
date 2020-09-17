@@ -130,7 +130,7 @@ class DeepD:
                 t0 = time.clock()
                 pos_train = np.random.choice(range(x_train_gold.shape[0]), self.pretrain_batch_size)
                 pos_valid = np.random.choice(range(x_valid_gold.shape[0]), self.pretrain_batch_size)
-                _, loss_train_i, mse_train_i = sess.run((opt_op, mse, mse), feed_dict={self.x: x_train_gold[pos_train]})
+                _, loss_train_i, mse_train_i = sess.run((opt_op[1], mse, mse), feed_dict={self.x: x_train_gold[pos_train]})
 
                 # record training
                 loss_valid_i, mse_valid_i = sess.run((mse, mse), feed_dict={self.x: x_valid_gold[pos_valid]})
@@ -149,6 +149,7 @@ class DeepD:
             print('[Training] Saving pre-train params...')
             screenshot.save_model("pretrain.model")
             screenshot.save_params()
+            sess.run(tf.variables_initializer(opt_op[0].variables()))
             screenshot.reset()
 
     def train(self, data, n_iter=1000, n_iter_patience=100):
@@ -173,7 +174,7 @@ class DeepD:
             t0 = time.clock()
             pos_train = np.random.choice(range(x_train_gold.shape[0]), self.batch_size)
             pos_valid = np.random.choice(range(x_valid_gold.shape[0]), self.batch_size)
-            _, loss_train_i, mse_train_i = sess.run((model.optimizer_op, model.loss, model.mse),
+            _, loss_train_i, mse_train_i = sess.run((model.optimizer_op[1], model.loss, model.mse),
                                                     feed_dict={self.x: x_train_gold[pos_train]})
 
             # record training
@@ -221,7 +222,7 @@ def get_optimizer(loss_in, lr, optimizer=tf.compat.v1.train.AdamOptimizer, var_l
         opt = optimizer(lr, beta1=args['beta1'])
         opt_op = opt.minimize(loss_in, var_list=var_list)
     print("[Construct] Successfully generated an operation {} for optimizing: {}.".format(opt_op.name, loss_in))
-    return opt_op
+    return opt, opt_op
 
 
 
