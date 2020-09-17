@@ -121,7 +121,7 @@ class DeepD:
         x_train_gold, x_valid_gold, x_test_gold = (data[key]['value'] for key in ['train', 'valid', 'test'])
         # Training on train set batches with early stopping on valid set batched
         for mse, opt_op in zip(self.pretrain_mses, self.pretrain_optimizer_ops):
-            print('[Training] Pre-training on train set at {}...'.format(opt_op[0].name))
+            print('[Training] Pre-training on train set at {}...'.format(opt_op[1].name))
             n_unchanged = 0
             idx_iter = 0
             while True:
