@@ -13,6 +13,7 @@ class DeepD:
         self.lr = config['learning_rate']
         self.l1 = config['l1']
         self.l2 = config['l2']
+        self.pretrain_batch_size = config['pretrain_batch_size']
         self.batch_size = config['batch_size']
         self.reg_params, self.export_params = [], {}
         self.encoders = self.build_encoders(self.x)
@@ -127,8 +128,8 @@ class DeepD:
                 if idx_iter > n_iter or n_unchanged > n_iter_patience:
                     break
                 t0 = time.clock()
-                pos_train = np.random.choice(range(x_train_gold.shape[0]), self.batch_size)
-                pos_valid = np.random.choice(range(x_valid_gold.shape[0]), self.batch_size)
+                pos_train = np.random.choice(range(x_train_gold.shape[0]), self.pretrain_batch_size)
+                pos_valid = np.random.choice(range(x_valid_gold.shape[0]), self.pretrain_batch_size)
                 _, loss_train_i, mse_train_i = sess.run((opt_op, mse, mse), feed_dict={self.x: x_train_gold[pos_train]})
 
                 # record training
