@@ -55,8 +55,8 @@ class Screenshot(dict):
         self.update(params)
 
     def save_output(self, X):
-        z, xhat = self.model.sess.run([self.model.encoders[-1]['tensor'], self.model.decoders[-1]['tensor']],
-                                      feed_dict={self.model.encoders[0]['tensor']: X})
+        z, xhat = self.model.sess.run([self.model.x, self.model.full_decoder['tensor']],
+                                      feed_dict={self.model.x: X})
         if self.verbose > 2:
             pd.DataFrame(z).to_csv("features.csv", header=None, index=None)
             pd.DataFrame(xhat).to_csv("imputation.csv", header=None, index=None)
