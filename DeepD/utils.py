@@ -1,5 +1,5 @@
 """
-This module defines the training of the model
+This module defines helper functions for training
 """
 
 import os
@@ -14,8 +14,9 @@ import pandas as pd
 
 
 class TimeLogger:
-    """calculate training time"""
-
+    """
+    Helper tool for logging training time
+    """
     def __init__(self, time_logger_step=1, hierachy=1):
         self.time_logger_step = time_logger_step
         self.step_count = 0
@@ -31,7 +32,17 @@ class TimeLogger:
 
 
 class Screenshot(dict):
+    """
+    Helper tool for logging and monitoring training process
+    """
     def __init__(self, model, n_iter_buffer, verbose=2, listen_freq=50):
+        """
+        :param model: (DeepD) model instance from ./model.py
+        :param n_iter_buffer: (int) moving average window width for loss
+        :param verbose: (int) verbose: 0: export model params; 1: export real time loss; 2: export model checkpoint;
+                                       3: export encoded tp2vecs; 4: export reconstructed data matrix
+        :param listen_freq: (int) the listening frequency (for stdout only), full loss would be saved in training.log
+        """
         # initialize loss_min
         super().__init__()
         self.n_iter_buffer = n_iter_buffer
@@ -59,7 +70,9 @@ class Screenshot(dict):
                                       feed_dict={self.model.x: X})
         if self.verbose > 2:
             pd.DataFrame(z).to_csv("features.csv", header=None, index=None)
-            pd.DataFrame(xhat).to_csv("imputation.csv", header=None, index=None)
+
+        if self.verbose > 3:
+                pd.DataFrame(xhat).to_csv("imputation.csv", header=None, index=None)
         return z, xhat
 
     def check_exist_params(self):
@@ -115,4 +128,7 @@ class Screenshot(dict):
 
 
 def md5(key):
+    """
+    Helper tool for providing unique md5 ids to exprs
+    """
     return hashlib.md5(key.encode()).hexdigest()

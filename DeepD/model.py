@@ -1,3 +1,6 @@
+"""
+This module defines main model modules
+"""
 import tensorflow as tf
 import numpy as np
 from . import utils
@@ -5,8 +8,14 @@ import time
 
 
 class DeepD:
-
+    """
+    The main unsupervised DeepD model framework
+    """
     def __init__(self, config, seed):
+        """
+        :param config: (dict) training configuration
+        :param seed: (int) training random seed for both data partition (numpy), params initialization (numpy)
+        """
         self.config = config['layers']
         self.x = tf.compat.v1.placeholder("float", [None, self.config[0][0]], name='X')
         self.aF = eval(config['activation'])
@@ -120,6 +129,11 @@ class DeepD:
         return mse, loss
 
     def pretrain(self, data, n_iter=1000, n_iter_patience=100):
+        """
+        :param data: (dict) training data dictionary
+        :param n_iter: (int) maximum number of iterations allowed
+        :param n_iter_patience: (int) tolerence of training loss no-decrease
+        """
         model, sess, screenshot = self, self.sess, self.screenshot
         if self.screenshot:
             print("[Training] Pretrained params detected. Skipping...")
@@ -128,7 +142,6 @@ class DeepD:
 
         x_train_gold, x_valid_gold, x_test_gold = (data[key]['value'] for key in ['train', 'valid', 'test'])
         # Training on train set batches with early stopping on valid set batched
-        ### sess.run(model.full_decoder['tensor'], feed_dict={self.x: x_valid_gold[:100]})
         for mse, opt_op in zip(self.pretrain_mses, self.pretrain_optimizer_ops):
             print('[Training] Pre-training on train set at {}...'.format(opt_op[1].name))
             n_unchanged = 0
@@ -145,7 +158,7 @@ class DeepD:
                 mse_valid_i = sess.run(mse, feed_dict={self.x: x_valid_gold[pos_valid]})
                 loss_valid_i = mse_valid_i
                 new_loss = screenshot.avg_n_iters_loss(loss_valid_i)
-                screenshot.log(filename="training.csv", iteration=(idx_iter, n_iter),
+                screenshot.log(filename="training.log", iteration=(idx_iter, n_iter),
                                unchanged=(n_unchanged, n_iter_patience), t=time.clock() - t0,
                                loss=(loss_train_i, loss_valid_i, mse_train_i, mse_valid_i, np.nan))
 
@@ -165,10 +178,8 @@ class DeepD:
     def train(self, data, n_iter=1000, n_iter_patience=100):
         """
         :param data: (dict) training data dictionary
-        :param n_iter_buffer: (int) moving average window width for loss
         :param n_iter: (int) maximum number of iterations allowed
         :param n_iter_patience: (int) tolerence of training loss no-decrease
-        :param verbose: (int) verbose: 0: no output; 1: print real time loss; 2: export outputs; 3: export params
         :return: z, xhat: (numpy.array, numpy.array) feature matrix and imputation matrix
         """
 
@@ -190,7 +201,7 @@ class DeepD:
             # record training
             loss_valid_i, mse_valid_i = sess.run((model.loss, model.mse), feed_dict={self.x: x_valid_gold[pos_valid]})
             new_loss = screenshot.avg_n_iters_loss(loss_valid_i)
-            screenshot.log(filename="training.csv", iteration=(idx_iter, n_iter),
+            screenshot.log(filename="training.log", iteration=(idx_iter, n_iter),
                            unchanged=(n_unchanged, n_iter_patience), t=time.clock() - t0,
                            loss=(loss_train_i, loss_valid_i, mse_train_i, mse_valid_i, np.nan))
 
@@ -206,7 +217,7 @@ class DeepD:
         print('[Training] Evaluating on valid set... {}'.format(x_valid_gold.shape))
         t0 = time.clock()
         loss_valid_i, mse_valid_i = sess.run((model.loss, model.mse), feed_dict={self.x: x_valid_gold})
-        screenshot.log(filename="training.csv", iteration=(-1, -1),
+        screenshot.log(filename="training.log", iteration=(-1, -1),
                        unchanged=(-1, -1), t=time.clock() - t0,
                        loss=(np.nan, loss_valid_i, np.nan, mse_valid_i, np.nan))
 
@@ -214,7 +225,7 @@ class DeepD:
         print('[Training] Evaluating on test set... {}'.format(x_test_gold.shape))
         t0 = time.clock()
         mse_test = sess.run(model.mse, feed_dict={self.x: x_test_gold})
-        screenshot.log(filename="training.csv", iteration=(-1, -1),
+        screenshot.log(filename="training.log", iteration=(-1, -1),
                        unchanged=(-1, -1), t=time.clock() - t0,
                        loss=(np.nan, np.nan, np.nan, np.nan, mse_test))
 
