@@ -22,7 +22,7 @@
     "l1": 1e-4,
     "l2": 1e-2,
     "optimizer": "tf.compat.v1.train.AdamOptimizer({}, beta1=0.9, beta2=0.9)",
-    "verbose": 3,
+    "verbose": 4,
     "listen_freq": 10,
     "pretrain_batch_size": 1024,
     "batch_size": 1024
