@@ -83,8 +83,13 @@ class DeepD:
     def build_pretrain_decoders(self, encoders):
         decoders = []
         for k, encoder in enumerate(encoders[1:]):  #
-            layer = self.construct_ae_layer(x=encoder['tensor'], weight=encoder['params']['w'], activationF=self.aF,
-                                            regularize=False, export=None, name="Decoder_{}".format(k+1))
+            if k != 0:
+                layer = self.construct_ae_layer(x=encoder['tensor'], weight=encoder['params']['w'], activationF=self.aF,
+                                                regularize=False, export=None, name="Decoder_{}".format(k + 1))
+            else:
+                layer = self.construct_ae_layer(x=encoder['tensor'], weight=encoder['params']['w'],
+                                                activationF=tf.nn.tanh,
+                                                regularize=False, export=None, name="Decoder_{}".format(k + 1))
             decoders.append(layer)
         return decoders
 
@@ -92,8 +97,13 @@ class DeepD:
         x = encoders[-1]
         with tf.compat.v1.variable_scope("CDecoders"):
             for k, encoder in enumerate(encoders[:0:-1]):  #
-                layer = self.construct_ae_layer(x=x['tensor'], weight=encoder['params']['w'], activationF=self.aF,
-                                                regularize=False, export=None, name="CDecoder_{}".format(k+1))
+                if k != len(encoders[:0:-1]) - 1:
+                    layer = self.construct_ae_layer(x=x['tensor'], weight=encoder['params']['w'], activationF=self.aF,
+                                                    regularize=False, export=None, name="CDecoder_{}".format(k+1))
+                else:
+                    layer = self.construct_ae_layer(x=x['tensor'], weight=encoder['params']['w'],
+                                                    activationF=tf.nn.tanh,
+                                                    regularize=False, export=None, name="CDecoder_{}".format(k+1))
                 x = layer
         return x
 
@@ -118,6 +128,7 @@ class DeepD:
 
         x_train_gold, x_valid_gold, x_test_gold = (data[key]['value'] for key in ['train', 'valid', 'test'])
         # Training on train set batches with early stopping on valid set batched
+        ### sess.run(model.full_decoder['tensor'], feed_dict={self.x: x_valid_gold[:100]})
         for mse, opt_op in zip(self.pretrain_mses, self.pretrain_optimizer_ops):
             print('[Training] Pre-training on train set at {}...'.format(opt_op[1].name))
             n_unchanged = 0
@@ -128,10 +139,11 @@ class DeepD:
                 t0 = time.clock()
                 pos_train = np.random.choice(range(x_train_gold.shape[0]), self.pretrain_batch_size)
                 pos_valid = np.random.choice(range(x_valid_gold.shape[0]), self.pretrain_batch_size)
-                _, loss_train_i, mse_train_i = sess.run((opt_op[1], mse, mse), feed_dict={self.x: x_train_gold[pos_train]})
-
+                _, mse_train_i = sess.run((opt_op[1], mse), feed_dict={self.x: x_train_gold[pos_train]})
+                loss_train_i = mse_train_i
                 # record training
-                loss_valid_i, mse_valid_i = sess.run((mse, mse), feed_dict={self.x: x_valid_gold[pos_valid]})
+                mse_valid_i = sess.run(mse, feed_dict={self.x: x_valid_gold[pos_valid]})
+                loss_valid_i = mse_valid_i
                 new_loss = screenshot.avg_n_iters_loss(loss_valid_i)
                 screenshot.log(filename="training.csv", iteration=(idx_iter, n_iter),
                                unchanged=(n_unchanged, n_iter_patience), t=time.clock() - t0,
