@@ -49,13 +49,11 @@ class DeepD:
                            name="Untilted_layer"):
 
         assert weight is not None or d_out is not None
-        d_in = x.shape[1]
+        d_in = x.shape[1].value
         with tf.compat.v1.variable_scope(name):
             if weight is None:
-                # xaiver = tf.glorot_normal_initializer(seed=None)
-                # weight = xaiver(shape=(d_in, d_out), dtype=tf.dtypes.float32)
-                weight = tf.Variable(tf.random.unif(-np.sqrt(6/(d_in + d_out)), np.sqrt(6/(d_in + d_out)),
-                                                    [d_in, d_out]), name="weight")  # xaiver initiation
+                weight = tf.Variable(np.random.uniform(-np.sqrt(6/(d_in + d_out)), np.sqrt(6/(d_in + d_out)),
+                                                       [d_in, d_out]), name="weight", dtype=tf.float32)  # xaiver initiation
             else:
                 d_out = weight.shape[0]
                 weight = tf.transpose(weight)
