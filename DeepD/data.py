@@ -75,7 +75,7 @@ def rescale_and_clip(data, scale_on=None):
         scaler = StandardScaler()  # rescale each cell
         data = np.transpose(scaler.fit_transform(np.transpose(data)))
     print("[Preprocessing] Clipping...")
-    clipping_thre = 5.  # cutting |outliers| > 5 sigma (assuming Gaussian)
+    clipping_thre = 1. 
     data = np.clip(data, -clipping_thre, clipping_thre)/clipping_thre
     print("[Preprocessing] Dataset is ready for training DeepD...")
     return data
