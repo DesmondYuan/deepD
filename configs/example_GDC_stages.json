@@ -1,0 +1,40 @@
+{
+    "expr_name": "Example_GDC",
+    "train_dataset": "data/Dataset2_GDC.experiment.csv",
+    "test_dataset": "data/Dataset2_GDC.withheld.csv",
+    "annotation_col": "Stage",
+    "validation_ratio": 0.3,
+    "n_genes": 978,
+    "unsupervised_layers": [
+        [978, 1000],
+        [1000, 500],
+        [500, 200],
+        [200, 100],
+        [100, 30]
+    ],
+   "supervised_layers": [
+        [30, 30],
+        [30, 30],
+        [30, 30],
+        [30, 4]
+    ],
+    "pretrain_tp2vec": true,
+    "plot_pretrain_results": true,
+    "train_disconnected_classifier": true,
+    "train_connected_classifier": true,
+    "max_iteration": 100000,
+    "max_iteration_pretrain": 3000,
+    "n_iter_patience": 1000,
+    "n_iter_patience_pretrain": 100,
+    "n_iter_buffer": 5,
+    "activation": "tf.nn.relu",
+    "learning_rate": 1e-3,
+    "l1": 1e-4,
+    "l2": 1e-2,
+    "optimizer": "tf.compat.v1.train.AdamOptimizer({}, beta1=0.9, beta2=0.9)",
+    "verbose": 4,
+    "listen_freq": 10,
+    "pretrain_batch_size": 1024,
+    "batch_size": 1024
+}
+
