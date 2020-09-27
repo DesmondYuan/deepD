@@ -114,14 +114,17 @@ def train(model, optimizer_op, data, full_loss, raw_loss, output, n_iter=1000, n
     idx_iter = 0
     x_train_gold, x_valid_gold, x_test_gold = (data[key]['value'] for key in ['train', 'valid', 'test'])
     y_train_gold, y_valid_gold, y_test_gold = (data[key]['class_annot'] for key in ['train', 'valid', 'test'])
+    sampler_train, sampler_valid = (data[key]['p_sampler'] for key in ['train', 'valid'])
+    
     # Training on train set batches with early stopping on valid set batched
     print('[Training] Training on train set...')
     while True:
         if idx_iter > n_iter or n_unchanged > n_iter_patience:
             break
         t0 = time.clock()
-        pos_train = np.random.choice(range(x_train_gold.shape[0]), model.batch_size)
-        pos_valid = np.random.choice(range(x_valid_gold.shape[0]), model.batch_size)
+
+        pos_train = np.random.choice(range(x_train_gold.shape[0]), model.batch_size, p=sampler_train)
+        pos_valid = np.random.choice(range(x_valid_gold.shape[0]), model.batch_size, p=sampler_valid)
         _, loss_train_i, mse_train_i = sess.run((optimizer_op[1], full_loss, raw_loss), feed_dict={
             model.x: x_train_gold[pos_train], model.y: y_train_gold[pos_train]})
 

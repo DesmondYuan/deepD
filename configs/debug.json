@@ -13,7 +13,7 @@
         [10, 16],
         [16, 2]
     ],
-    "pretrain_tp2vec": true,
+    "pretrain_tp2vec": false,
     "train_disconnected_classifier": true,
     "train_connected_classifier": true,
     "max_iteration": 100,

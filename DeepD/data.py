@@ -60,7 +60,10 @@ def preprocess_df(df, annot_col='class label', task='untitled_set', normalize_on
     else:
         data = rescale_and_clip(data)
 
-    return {'value': data, 'full_label': labels, 'class_annot': label_to_classify}
+    p_class = 1./np.mean(label_to_classify, axis=0)
+    p_sampler = np.sum(label_to_classify * p_class, axis=1) / np.sum(label_to_classify * p_class)
+
+    return {'value': data, 'full_label': labels, 'class_annot': label_to_classify, 'p_sampler': p_sampler}
 
 
 def assert_scale(x):
