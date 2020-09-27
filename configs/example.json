@@ -5,13 +5,22 @@
     "annotation_col": "nc_label",
     "validation_ratio": 0.3,
     "n_genes": 978,
-    "layers": [
+    "unsupervised_layers": [
         [978, 1000],
         [1000, 500],
         [500, 200],
         [200, 100],
-        [100, 50]
+        [100, 30]
     ],
+   "supervised_layers": [
+        [30, 30],
+        [30, 30],
+        [30, 30],
+        [30, 2]
+    ],
+    "pretrain_tp2vec": true,
+    "train_disconnected_classifier": true,
+    "train_connected_classifier": true,
     "max_iteration": 100000,
     "max_iteration_pretrain": 3000,
     "n_iter_patience": 1000,
