@@ -158,6 +158,9 @@ def get_metrics(logits, gold, name="DeepDCancer"):
 def plot_reconstruction(xhat, x, zhat, y, n=100):
     os.makedirs("outputs", exist_ok=True)
     print("[Utils] Plotting Tp2vec reconstruction results...")
+    if n > 100:
+        print("[Utils] Due to the large # of samples, this step could take a while - "
+              "you might want to consider downsampling...")
     plt_pos = np.random.choice(range(zhat.shape[0]), n)
     plt.subplots(figsize=[18, 6])
 

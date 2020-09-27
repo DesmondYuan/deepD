@@ -38,7 +38,7 @@ def session_init(sess, seed):
     np.random.seed(seed), tf.compat.v1.set_random_seed(seed)
 
 
-def pretrain(model, data, n_iter=1000, n_iter_patience=100, model_name="model"):
+def pretrain(model, data, n_iter=1000, n_iter_patience=100):
     """
     For layerwise pretraining of the autoencoders
 
