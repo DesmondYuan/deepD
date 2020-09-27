@@ -1,9 +1,12 @@
 {
     "expr_name": "Debug",
-    "train_dataset": "data/Dataset1.csv",
-    "test_dataset": "data/Dataset2.csv",
     "layers": [
         [978, 2]
+    "train_dataset": "data/Dataset1_GENT_L1000_U133Plus2.experiment.csv",
+    "test_dataset": "data/Dataset1_GENT_L1000_U133Plus2.withheld.csv",
+    "annotation_col": "nc_label",
+    "validation_ratio": 0.3,
+    "n_genes": 978,
     ],
     "max_iteration": 10,
     "activation": "tf.nn.leaky_relu",

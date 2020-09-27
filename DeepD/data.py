@@ -24,11 +24,13 @@ def random_partition(train_df, test_df, n_genes=978, annotation_col='nc_label', 
 
 def normalize_train_and_test(train_df, test_df, annot_col='class label', n_genes=978):
     """
+    Args
     :param train_df: (pandas.DataFrame) training data from disk
     :param test_df: (pandas.DataFrame) test data frame from disk
     :param annot_col: (str) which column to be used as classification label
     :param n_genes: (int) the length of feature vectors (e.g. for L1000 genes: 978)
-    :return: train, test (dict, dict): processed dataset instances, each has:
+
+    Returns: train, test (dict, dict): processed dataset instances, each has:
             'value': (pandas.DataFrame) data matrix
             'full_label': (pandas.DataFrame) all the metadata information including classification annotations
             'class_annot': (numpy.ndarray) classification annotations
@@ -43,7 +45,10 @@ def preprocess_df(df, annot_col='class label', task='untitled_set', normalize_on
     assert df.shape[1] > n_genes  # L1000 genes
     data = df.values[:, -n_genes:].astype('float')
     labels = df.iloc[:, :-n_genes]
+
     label_to_classify = df[annot_col].values.flatten().astype('int')
+    n_class = np.max(label_to_classify) + 1
+    label_to_classify = np.eye(n_class, dtype=np.float32)[label_to_classify]
 
     if data.max() == 1 and data.min() == -1:
         print("[Preprocessing] Input data {} detected has a range of (-1, 1), skipping data preprocessing..."
