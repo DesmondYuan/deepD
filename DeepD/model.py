@@ -41,18 +41,12 @@ class DeepD:
             get_optimizer(mse, self.lr, scope="pretrain_opt_{}".format(k+1), optimizer=config['optimizer'],
                           var_list=tf.compat.v1.get_collection('variables', scope='Encoder_{}'.format(k+1)))
             for k, mse in enumerate(self.pretrain_mses)]
-
-        for i in tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.GLOBAL_VARIABLES, scope='initialization'):
-            print(i)
-        self.saver = tf.compat.v1.train.Saver()
-        self.sess = tf.compat.v1.Session()
-        tf.summary.FileWriter("model.summary", self.sess.graph)
-        # xaiver_initializer = tf.compat.v1.initializers.glorot_normal(seed=seed)
-        # self.sess.run(xaiver_initializer(tf.global_variables()))
-        self.sess.run(tf.compat.v1.global_variables_initializer())
         self.screenshot = utils.Screenshot(self, config['n_iter_buffer'], verbose=config['verbose'],
                                            listen_freq=config['listen_freq'])
-        np.random.seed(seed), tf.compat.v1.set_random_seed(seed)
+
+    def attach_sess(self, sess, saver):
+        self.sess = sess
+        self.saver = saver
 
     def construct_ae_layer(self, x, d_out=None, activationF=tf.tanh, weight=None, regularize=True, export=None,
                            name="Untilted_layer"):
@@ -116,66 +110,12 @@ class DeepD:
                 x = layer
         return x
 
-    def get_mse(self, x, xhat):
-        mse = tf.reduce_mean(tf.square(x - xhat), name='MSE')
-        return mse
 
-    def get_loss(self, x, xhat):
-        n_params = sum([np.prod(p.shape) for p in self.reg_params]).value
-        l1 = self.l1 * tf.reduce_sum([tf.reduce_sum(tf.abs(p)) for p in self.reg_params]) / n_params
-        l2 = self.l2 * tf.reduce_sum([tf.reduce_sum(tf.square(p)) for p in self.reg_params]) / n_params
-        mse = self.get_mse(x, xhat)
-        loss = tf.add(mse, l1 + l2, name='loss')
-        return mse, loss
-
-    def pretrain(self, data, n_iter=1000, n_iter_patience=100):
-        """
-        :param data: (dict) training data dictionary
-        :param n_iter: (int) maximum number of iterations allowed
-        :param n_iter_patience: (int) tolerence of training loss no-decrease
-        """
-        model, sess, screenshot = self, self.sess, self.screenshot
-        if self.screenshot:
-            print("[Training] Pretrained params detected. Skipping...")
-            screenshot.load_model("pretrain.model")
-            return 1
-
-        x_train_gold, x_valid_gold, x_test_gold = (data[key]['value'] for key in ['train', 'valid', 'test'])
-        # Training on train set batches with early stopping on valid set batched
-        for mse, opt_op in zip(self.pretrain_mses, self.pretrain_optimizer_ops):
-            print('[Training] Pre-training on train set at {}...'.format(opt_op[1].name))
-            n_unchanged = 0
-            idx_iter = 0
-            while True:
-                if idx_iter > n_iter or n_unchanged > n_iter_patience:
-                    break
-                t0 = time.clock()
-                pos_train = np.random.choice(range(x_train_gold.shape[0]), self.pretrain_batch_size)
-                pos_valid = np.random.choice(range(x_valid_gold.shape[0]), self.pretrain_batch_size)
-                _, mse_train_i = sess.run((opt_op[1], mse), feed_dict={self.x: x_train_gold[pos_train]})
-                loss_train_i = mse_train_i
-                # record training
-                mse_valid_i = sess.run(mse, feed_dict={self.x: x_valid_gold[pos_valid]})
-                loss_valid_i = mse_valid_i
-                new_loss = screenshot.avg_n_iters_loss(loss_valid_i)
-                screenshot.log(filename="training.log", iteration=(idx_iter, n_iter),
-                               unchanged=(n_unchanged, n_iter_patience), t=time.clock() - t0,
-                               loss=(loss_train_i, loss_valid_i, mse_train_i, mse_valid_i, np.nan))
-
-                # early stopping
-                idx_iter += 1
-                if new_loss < screenshot.loss_min:
-                    n_unchanged = 0
-                    screenshot.screenshot(loss_min=new_loss)
-                else:
-                    n_unchanged += 1
-            print('[Training] Saving pre-train params...')
-            screenshot.save_model("pretrain.model")
-            screenshot.save_params()
-            sess.run(tf.variables_initializer(opt_op[0].variables()))  # refresh optimizer states
-            screenshot.reset()  # refresh best_loss saved in screenshot
-
-    def train(self, data, n_iter=1000, n_iter_patience=100):
+class DeepDCancer:
+    """
+    The main supervised DeepDCancer and DeepDcCancer diagnostic model framework
+    """
+    def __init__(self, tp2vec, config):
         """
         :param data: (dict) training data dictionary
         :param n_iter: (int) maximum number of iterations allowed
@@ -183,67 +123,6 @@ class DeepD:
         :return: z, xhat: (numpy.array, numpy.array) feature matrix and imputation matrix
         """
 
-        model, sess, screenshot = self, self.sess, self.screenshot
-        n_unchanged = 0
-        idx_iter = 0
-        x_train_gold, x_valid_gold, x_test_gold = (data[key]['value'] for key in ['train', 'valid', 'test'])
-        # Training on train set batches with early stopping on valid set batched
-        print('[Training] Training on train set...')
-        while True:
-            if idx_iter > n_iter or n_unchanged > n_iter_patience:
-                break
-            t0 = time.clock()
-            pos_train = np.random.choice(range(x_train_gold.shape[0]), self.batch_size)
-            pos_valid = np.random.choice(range(x_valid_gold.shape[0]), self.batch_size)
-            _, loss_train_i, mse_train_i = sess.run((model.optimizer_op[1], model.loss, model.mse),
-                                                    feed_dict={self.x: x_train_gold[pos_train]})
-
-            # record training
-            loss_valid_i, mse_valid_i = sess.run((model.loss, model.mse), feed_dict={self.x: x_valid_gold[pos_valid]})
-            new_loss = screenshot.avg_n_iters_loss(loss_valid_i)
-            screenshot.log(filename="training.log", iteration=(idx_iter, n_iter),
-                           unchanged=(n_unchanged, n_iter_patience), t=time.clock() - t0,
-                           loss=(loss_train_i, loss_valid_i, mse_train_i, mse_valid_i, np.nan))
-
-            # early stopping
-            idx_iter += 1
-            if new_loss < screenshot.loss_min:
-                n_unchanged = 0
-                screenshot.screenshot(loss_min=new_loss)
-            else:
-                n_unchanged += 1
-
-        # Evaluation on entire valid set
-        print('[Training] Evaluating on valid set... {}'.format(x_valid_gold.shape))
-        t0 = time.clock()
-        loss_valid_i, mse_valid_i = sess.run((model.loss, model.mse), feed_dict={self.x: x_valid_gold})
-        screenshot.log(filename="training.log", iteration=(-1, -1),
-                       unchanged=(-1, -1), t=time.clock() - t0,
-                       loss=(np.nan, loss_valid_i, np.nan, mse_valid_i, np.nan))
-
-        # Evaluation on test set
-        print('[Training] Evaluating on test set... {}'.format(x_test_gold.shape))
-        t0 = time.clock()
-        mse_test = sess.run(model.mse, feed_dict={self.x: x_test_gold})
-        screenshot.log(filename="training.log", iteration=(-1, -1),
-                       unchanged=(-1, -1), t=time.clock() - t0,
-                       loss=(np.nan, np.nan, np.nan, np.nan, mse_test))
-
-        # Save model
-        screenshot.save_params()
-        screenshot.save_model('./model.ckpt')
-        z, xhat = screenshot.save_output(data['test']['value'])
-        return z, xhat
-
-
-def get_optimizer(loss_in, lr, optimizer="tf.compat.v1.train.AdamOptimizer({})", var_list=None, scope="Optimization"):
-    if var_list is None:
-        var_list = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.GLOBAL_VARIABLES)
-    with tf.compat.v1.variable_scope(scope, reuse=tf.compat.v1.AUTO_REUSE):
-        opt = eval(optimizer.format(lr))
-        opt_op = opt.minimize(loss_in, var_list=var_list)
-    print("[Construct] Successfully generated an operation {} for optimizing: {}.".format(opt_op.name, loss_in))
-    return opt, opt_op
 
 
 

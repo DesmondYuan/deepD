@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from DeepD.model import DeepD
 from DeepD.utils import md5
+from DeepD.train import pretrain, train, session_setup, session_init
 from DeepD.data import random_partition
 
 
@@ -65,4 +66,10 @@ sns.heatmap(z[plt_pos], cmap='viridis')
 plt.tight_layout()
 plt.savefig("results.png")
 print('[Main] Experiment finishes.')
+# Training DeepD models
+print("[Main] Starting model training at {}.".format(wdr))
+sess, saver = session_setup()
+tp2vec.attach_sess(sess, saver)
+deepdc.attach_sess(sess, saver)
+session_init(sess=sess, seed=args.random_seed)
 
