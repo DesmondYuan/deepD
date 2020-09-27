@@ -136,7 +136,9 @@ class DeepDCancer:
 
         self.yhat = self.build_layers()
         with tf.compat.v1.variable_scope("classifier_Loss", reuse=tf.compat.v1.AUTO_REUSE):
-            self.xent_loss, self.loss = get_loss(self.yhat, self.y, fn=get_xent, l1=self.l1, l2=self.l2)
+            self.xent_loss, self.loss = get_loss(self.yhat, self.y, fn=get_xent, l1=self.l1, l2=self.l2,
+                                                 var_list=(tf.compat.v1.get_collection('variables', scope='Classifer') +
+                                                           tf.compat.v1.get_collection('variables', scope='Encoder')))
 
         self.optimizer_op_disconnected = get_optimizer(
             self.loss, self.lr, scope="DeepDCancer_opt", optimizer=config['optimizer'],
