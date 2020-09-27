@@ -4,20 +4,21 @@ This module defines main model modules
 import tensorflow as tf
 import numpy as np
 from . import utils
-import time
+from .train import get_optimizer, get_mse, get_loss
 
 
-class DeepD:
+class DeepT2vec:
     """
-    The main unsupervised DeepD model framework
+    The main unsupervised DeepDT2vec model framework
     """
-    def __init__(self, config, seed):
+    def __init__(self, config):
         """
         :param config: (dict) training configuration
         :param seed: (int) training random seed for both data partition (numpy), params initialization (numpy)
         """
-        self.config = config['layers']
+        self.config = config['unsupervised_layers']
         self.x = tf.compat.v1.placeholder("float", [None, self.config[0][0]], name='X')
+        self.y = tf.compat.v1.placeholder("float", [None, config['supervised_layers'][-1][1]], name='Y')
         self.aF = eval(config['activation'])
         self.lr = config['learning_rate']
         self.l1 = config['l1']
@@ -28,12 +29,11 @@ class DeepD:
         self.encoders = self.build_encoders(self.x)
         self.decoders = self.build_pretrain_decoders(self.encoders)
         self.full_decoder = self.build_full_decoder(self.encoders)
-
         with tf.compat.v1.variable_scope("CDAE_Loss", reuse=tf.compat.v1.AUTO_REUSE):
-            self.mse, self.loss = self.get_loss(self.x, self.full_decoder['tensor'])
+            self.mse, self.loss = get_loss(self.x, self.full_decoder['tensor'], l1=self.l1, l2=self.l2)
 
         with tf.compat.v1.variable_scope("AEs_Loss", reuse=tf.compat.v1.AUTO_REUSE):
-            self.pretrain_mses = [self.get_mse(x['tensor'], xhat['tensor'])
+            self.pretrain_mses = [get_mse(x['tensor'], xhat['tensor'])
                                   for x, xhat in zip(self.encoders[:-1], self.decoders)]
 
         self.optimizer_op = get_optimizer(self.loss, self.lr, scope="CDAE_optimization", optimizer=config['optimizer'])
@@ -55,8 +55,9 @@ class DeepD:
         d_in = x.shape[1].value
         with tf.compat.v1.variable_scope(name):
             if weight is None:
+                # xaiver initiation
                 weight = tf.Variable(np.random.uniform(-np.sqrt(6/(d_in + d_out)), np.sqrt(6/(d_in + d_out)),
-                                                       [d_in, d_out]), name="weight", dtype=tf.float32)  # xaiver initiation
+                                                       [d_in, d_out]), name="weight", dtype=tf.float32)
             else:
                 d_out = weight.shape[0]
                 weight = tf.transpose(weight)
@@ -67,8 +68,8 @@ class DeepD:
                 self.reg_params.append(params['w'])
                 self.reg_params.append(params['b'])
             if export is not None:
-                self.export_params.update({'w_{}'.format(export): params['w']})
-                self.export_params.update({'b_{}'.format(export): params['b']})
+                self.export_params.update({'AE_w_{}'.format(export): params['w']})
+                self.export_params.update({'AE_b_{}'.format(export): params['b']})
             y = activationF(tf.matmul(x, weight) + bias)
         return {'tensor': y, 'params': params}
 
@@ -117,11 +118,68 @@ class DeepDCancer:
     """
     def __init__(self, tp2vec, config):
         """
-        :param data: (dict) training data dictionary
-        :param n_iter: (int) maximum number of iterations allowed
-        :param n_iter_patience: (int) tolerence of training loss no-decrease
-        :return: z, xhat: (numpy.array, numpy.array) feature matrix and imputation matrix
+        :param tp2vec: (deepD.DeepT2vec) a pretrained deep autoencoder (unsupervised)
+        :param config: (dict) training configuration
+        :param seed: (int) training random seed for both data partition (numpy), params initialization (numpy)
         """
+        self.config = config['supervised_layers']
+        self.x = tp2vec.x
+        self.y = tp2vec.y
+        self.x_encoded = tp2vec.encoders[-1]['tensor']
+        self.true_labels = tf.compat.v1.placeholder("float", [None, self.config[-1][1]], name='Y')
+        self.regularize_params, self.export_params = [], {}
+        self.aF = eval(config['activation'])
+        self.lr = config['learning_rate']
+        self.l1 = config['l1']
+        self.l2 = config['l2']
+        self.batch_size = config['batch_size']
+
+        self.yhat = self.build_layers()
+        with tf.compat.v1.variable_scope("classifier_Loss", reuse=tf.compat.v1.AUTO_REUSE):
+            self.xent_loss, self.loss = get_loss(self.yhat, self.y,
+                                                 fn=tf.losses.softmax_cross_entropy, l1=self.l1, l2=self.l2)
+
+        self.optimizer_op_disconnected = get_optimizer(
+            self.loss, self.lr, scope="DeepDCancer_opt", optimizer=config['optimizer'],
+            var_list=tf.compat.v1.get_collection('variables', scope='Classifer')
+        )
+
+        self.optimizer_op_connected = get_optimizer(self.loss, self.lr, scope="DeepDcCancer_opt",
+                                                    optimizer=config['optimizer'])
+
+        self.screenshot = utils.Screenshot(self, config['n_iter_buffer'], verbose=config['verbose'],
+                                           listen_freq=config['listen_freq'])
+
+    def attach_sess(self, sess, saver):
+        self.sess = sess
+        self.saver = saver
+
+    def construct_dense_layer(self, x, d_out, activationF=tf.tanh, export=None):
+        d_in = x.shape[1].value
+        with tf.compat.v1.variable_scope("classifier_layer"):
+            # xaiver initiation
+            weight = tf.Variable(np.random.uniform(-np.sqrt(6 / (d_in + d_out)), np.sqrt(6 / (d_in + d_out)),
+                                                   [d_in, d_out]), name="weight", dtype=tf.float32)
+            bias = tf.Variable(tf.zeros(d_out), name="bias")
+            params = {'w': weight, 'b': bias}
+            self.regularize_params.append(params['w'])
+            self.regularize_params.append(params['b'])
+            if export is not None:
+                self.export_params.update({'classifier_w_{}'.format(export): params['w']})
+                self.export_params.update({'classifier_b_{}'.format(export): params['b']})
+            y = activationF(tf.matmul(x, weight) + bias)
+        return {'tensor': y, 'params': params}
+
+    def build_layers(self):
+        x = self.x_encoded
+        with tf.compat.v1.variable_scope("Classifer"):
+            for k, layer_config in enumerate(self.config):
+                assert x.shape[1] == layer_config[0], "Mismatched layers in supervised config."
+                layer = self.construct_dense_layer(x=x, d_out=layer_config[1], activationF=tf.nn.tanh, export=k+1)
+                x = layer['tensor']
+        return x
+
+
 
 
 

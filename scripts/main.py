@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from DeepD.model import DeepD
-from DeepD.utils import md5
+from DeepD.model import DeepT2vec, DeepDCancer
+from DeepD.utils import md5, get_metrics, plot_reconstruction
 from DeepD.train import pretrain, train, session_setup, session_init
 from DeepD.data import random_partition
 
@@ -39,15 +39,13 @@ os.chdir(wdr)
 pd.DataFrame(valid_pos).to_csv("valid_set.pos")
 valid_set['full_label'].to_csv("valid_set.labels.csv")
 
-# Constructing DeepD model
-print("[Main] Starting model construction at {}.".format(wdr))
+# Constructing DeepD models
 for key in datasets:
-    assert datasets[key]['value'].shape[1] == cfg['layers'][0][0]
-print("[Main] Constructing DeepD model...")
-model = DeepD(cfg, seed=args.random_seed)
-print("[Main] Training DeepD model...")
-model.pretrain(datasets, n_iter=cfg['max_iteration_pretrain'], n_iter_patience=cfg['n_iter_patience_pretrain'])
-z, xhat = model.train(datasets, n_iter=cfg['max_iteration'], n_iter_patience=cfg['n_iter_patience'])
+    assert datasets[key]['value'].shape[1] == cfg['unsupervised_layers'][0][0]
+print("[Main] Constructing DeepT2vec model at {}.".format(wdr))
+tp2vec = DeepT2vec(cfg)
+print("[Main] Constructing DeepDCancer and DeepDcCancer model at {}.".format(wdr))
+deepdc = DeepDCancer(tp2vec, cfg)
 
 # Plotting results
 print("[Main] Plotting results...")
@@ -73,3 +71,29 @@ tp2vec.attach_sess(sess, saver)
 deepdc.attach_sess(sess, saver)
 session_init(sess=sess, seed=args.random_seed)
 
+if cfg['pretrain_tp2vec']:
+    print("-"*80, '\n')
+    print("[Main] Training DeepT2vec model...")
+    pretrain(model=tp2vec, data=datasets,
+             n_iter=cfg['max_iteration_pretrain'], n_iter_patience=cfg['n_iter_patience_pretrain'])
+    z, xhat = train(model=tp2vec, optimizer_op=tp2vec.optimizer_op, data=datasets,
+                    raw_loss=tp2vec.mse, full_loss=tp2vec.loss, model_name="Tp2vec_finetune",
+                    output=[tp2vec.decoders[-1]['tensor'], tp2vec.full_decoder['tensor']],
+                    n_iter=cfg['max_iteration'], n_iter_patience=cfg['n_iter_patience'])
+    tp2vec.screenshot.save_output([z, xhat], ["Compressed_features", "Reconstruction"], require_verbose=[2, 3])
+
+if cfg['train_disconnected_classifier']:
+    print("-"*80, '\n')
+    print("[Main] Training DeepDCancer model...")
+    logits = train(model=deepdc, optimizer_op=deepdc.optimizer_op_disconnected, data=datasets,
+                   raw_loss=deepdc.xent_loss, full_loss=deepdc.loss, output=[deepdc.yhat], model_name="DeepDCancer",
+                   n_iter=cfg['max_iteration'], n_iter_patience=cfg['n_iter_patience'])[0]
+
+if cfg['train_connected_classifier']:
+    print("-"*80, '\n')
+    print("[Main] Training DeepDcCancer model...")
+    logits = train(model=deepdc, optimizer_op=deepdc.optimizer_op_connected, data=datasets,
+                   raw_loss=deepdc.xent_loss, full_loss=deepdc.loss, output=[deepdc.yhat], model_name="DeepDcCancer",
+                   n_iter=cfg['max_iteration'], n_iter_patience=cfg['n_iter_patience'])[0]
+
+print('[Main] Experiment finishes.')
