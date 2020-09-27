@@ -64,10 +64,11 @@ if cfg['pretrain_tp2vec']:
              n_iter=cfg['max_iteration_pretrain'], n_iter_patience=cfg['n_iter_patience_pretrain'])
     z, xhat = train(model=tp2vec, optimizer_op=tp2vec.optimizer_op, data=datasets,
                     raw_loss=tp2vec.mse, full_loss=tp2vec.loss, model_name="Tp2vec_finetune",
-                    output=[tp2vec.decoders[-1]['tensor'], tp2vec.full_decoder['tensor']],
+                    output=[tp2vec.encoders[-1]['tensor'], tp2vec.full_decoder['tensor']],
                     n_iter=cfg['max_iteration'], n_iter_patience=cfg['n_iter_patience'])
     tp2vec.screenshot.save_output([z, xhat], ["Compressed_features", "Reconstruction"], require_verbose=[2, 3])
-    # plot_reconstruction(xhat=xhat, x=test_set['value'], zhat=z, y=test_set['class_annot'], n=2000)
+    if cfg['plot_pretrain_results']:
+        plot_reconstruction(xhat=xhat, x=test_set['value'], zhat=z, y=test_set['class_annot'], n=1000)
 
 if cfg['train_disconnected_classifier']:
     print("-"*80, '\n')

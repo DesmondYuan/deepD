@@ -19,6 +19,7 @@
         [30, 2]
     ],
     "pretrain_tp2vec": true,
+    "plot_pretrain_results": true,
     "train_disconnected_classifier": true,
     "train_connected_classifier": true,
     "max_iteration": 100000,
