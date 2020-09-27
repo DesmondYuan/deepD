@@ -38,6 +38,7 @@ os.makedirs(wdr, exist_ok=True)
 os.chdir(wdr)
 pd.DataFrame(valid_pos).to_csv("valid_set.pos")
 valid_set['full_label'].to_csv("valid_set.labels.csv")
+json.dump(cfg, open('../config.json', 'w'), indent=4)
 
 # Constructing DeepD models
 for key in datasets:
@@ -47,23 +48,6 @@ tp2vec = DeepT2vec(cfg)
 print("[Main] Constructing DeepDCancer and DeepDcCancer model at {}.".format(wdr))
 deepdc = DeepDCancer(tp2vec, cfg)
 
-# Plotting results
-print("[Main] Plotting results...")
-plt_pos = np.random.choice(range(z.shape[0]), 100)
-plt.subplots(figsize=[18, 6])
-if sns.__version__ >= "0.11":
-    plt.subplot(131)
-    sns.kdeplot(x=test_set['value'][plt_pos].flatten(), y=xhat[plt_pos].flatten(), shade=True)
-    plt.subplot(132)
-    sns.histplot(x=test_set['value'][plt_pos].flatten(), y=xhat[plt_pos].flatten(), bins=40)
-else:
-    plt.subplot(131)
-    sns.kdeplot(data=test_set['value'][plt_pos].flatten(), data2=xhat[plt_pos].flatten(), shade=True)
-plt.subplot(133)
-sns.heatmap(z[plt_pos], cmap='viridis')
-plt.tight_layout()
-plt.savefig("results.png")
-print('[Main] Experiment finishes.')
 # Training DeepD models
 print("[Main] Starting model training at {}.".format(wdr))
 sess, saver = session_setup()
@@ -81,6 +65,7 @@ if cfg['pretrain_tp2vec']:
                     output=[tp2vec.decoders[-1]['tensor'], tp2vec.full_decoder['tensor']],
                     n_iter=cfg['max_iteration'], n_iter_patience=cfg['n_iter_patience'])
     tp2vec.screenshot.save_output([z, xhat], ["Compressed_features", "Reconstruction"], require_verbose=[2, 3])
+    plot_reconstruction(xhat=xhat, x=test_set['value'], zhat=z, y=test_set['class_annot'], n=10)
 
 if cfg['train_disconnected_classifier']:
     print("-"*80, '\n')
@@ -88,6 +73,9 @@ if cfg['train_disconnected_classifier']:
     logits = train(model=deepdc, optimizer_op=deepdc.optimizer_op_disconnected, data=datasets,
                    raw_loss=deepdc.xent_loss, full_loss=deepdc.loss, output=[deepdc.yhat], model_name="DeepDCancer",
                    n_iter=cfg['max_iteration'], n_iter_patience=cfg['n_iter_patience'])[0]
+    yhat = get_metrics(logits, datasets['test']['class_annot'], name="DeepDCancer")
+    deepdc.screenshot.save_output([logits, yhat], require_verbose=[1, 0],
+                                  tensor_name=["Prediction_DeepDCancer_logits", "Prediction_DeepDCancer_class"])
 
 if cfg['train_connected_classifier']:
     print("-"*80, '\n')
@@ -95,5 +83,8 @@ if cfg['train_connected_classifier']:
     logits = train(model=deepdc, optimizer_op=deepdc.optimizer_op_connected, data=datasets,
                    raw_loss=deepdc.xent_loss, full_loss=deepdc.loss, output=[deepdc.yhat], model_name="DeepDcCancer",
                    n_iter=cfg['max_iteration'], n_iter_patience=cfg['n_iter_patience'])[0]
+    yhat = get_metrics(logits, datasets['test']['class_annot'], name="DeepDcCancer")
+    deepdc.screenshot.save_output([logits, yhat], require_verbose=[1, 0],
+                                  tensor_name=["Prediction_DeepDcCancer_logits", "Prediction_DeepDcCancer_class"])
 
 print('[Main] Experiment finishes.')

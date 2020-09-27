@@ -10,7 +10,9 @@ import pandas as pd
 import tensorflow as tf
 from tensorflow.compat.v1.errors import OutOfRangeError
 import hashlib
-import pandas as pd
+from sklearn.metrics import confusion_matrix, roc_auc_score, balanced_accuracy_score, accuracy_score
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 class TimeLogger:
@@ -65,24 +67,27 @@ class Screenshot(dict):
             params[item] = pd.DataFrame(params[item])
         self.update(params)
 
-    def save_output(self, X):
-        z, xhat = self.model.sess.run([self.model.x, self.model.full_decoder['tensor']],
-                                      feed_dict={self.model.x: X})
-        if self.verbose > 2:
-            pd.DataFrame(z).to_csv("features.csv", header=None, index=None)
-
-        if self.verbose > 3:
-                pd.DataFrame(xhat).to_csv("imputation.csv", header=None, index=None)
-        return z, xhat
+    def save_output(self, output, tensor_name, require_verbose):
+        try:
+            os.mkdir("outputs")
+        except FileExistsError:
+            pass
+        for out, name, v in zip(output, tensor_name, require_verbose):
+            if self.verbose > v:
+                pd.DataFrame(out).to_csv('outputs/' + name + '.csv', header=None, index=None)
 
     def check_exist_params(self):
         return glob.glob("best.*.csv") != []
 
     def save_params(self):
-        for file in glob.glob("best.*.csv"):
+        try:
+            os.mkdir("params")
+        except FileExistsError:
+            pass
+        for file in glob.glob("params/best.*.csv"):
             os.remove(file)
         for key in self.model.export_params:
-            self[key].to_csv("best.{}.loss.{}.csv".format(key, self.loss_min))
+            self[key].to_csv("params/best.{}.loss.{}.csv".format(key, self.loss_min))
 
     def save_model(self, path):
         if self.verbose > 1:
@@ -132,3 +137,52 @@ def md5(key):
     Helper tool for providing unique md5 ids to exprs
     """
     return hashlib.md5(key.encode()).hexdigest()
+
+
+def get_metrics(logits, gold, name="DeepDCancer"):
+    yhat = np.argmax(logits, axis=1)
+    gold = np.argmax(gold, axis=1)
+    for i in ["confusion_matrix", "roc_auc_score", "balanced_accuracy_score", "accuracy_score"]:
+        print("[Evaluation] ", i)
+        print(eval(i)(gold, yhat))
+        if i == 'confusion_matrix':
+            plt.subplots(figsize=[4, 4])
+            sns.heatmap(eval(i)(gold, yhat), cmap='viridis', annot=True, fmt="g")
+            plt.title("Confusion Matrix".format(i))
+            plt.savefig("outputs/{}.png".format(name))
+
+    return yhat
+
+
+def plot_reconstruction(xhat, x, zhat, y, n=100):
+    try:
+        os.mkdir("outputs")
+    except FileExistsError:
+        pass
+
+    print("[Utils] Plotting Tp2vec reconstruction results...")
+    plt_pos = np.random.choice(range(zhat.shape[0]), n)
+    plt.subplots(figsize=[18, 6])
+
+    plt.subplot(131)
+    sns.kdeplot(x=x[plt_pos].flatten(), y=xhat[plt_pos].flatten(), shade=True, cmap='mako')
+    plt.title("Reconstruction")
+    plt.xlabel("Original genee expression")
+    plt.ylabel("Reconstructed gene expression")
+
+    plt.subplot(132)
+    sns.histplot(x=x[plt_pos].flatten(), y=xhat[plt_pos].flatten(), bins=40, palette='viridis')
+    plt.title("Reconstruction")
+    plt.xlabel("Original genee expression")
+    plt.ylabel("Reconstructed gene expression")
+
+    y = np.argmax(y, axis=1)
+    nclass = max(y) + 1
+    for i in range(nclass):
+        plt.subplot(1, 3 * nclass, 2 * nclass + i + 1)
+        pos = np.where(y == i)
+        sns.heatmap(zhat[pos], cmap='viridis')
+        plt.title("Extracted features (class: {})".format(i))
+
+    plt.tight_layout()
+    plt.savefig("outputs/DeepT2Vec.png")
