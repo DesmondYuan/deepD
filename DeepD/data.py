@@ -1,5 +1,5 @@
 """
-Module DeepD.data is for normalization and data clipping as we described in Methods section
+This module is for normalization and data clipping as we described in Methods section.
 """
 import pandas as pd
 import numpy as np
@@ -8,6 +8,10 @@ from collections import Counter
 
 
 def random_partition(train_df, test_df, n_genes=978, annotation_col='nc_label', seed=0, validation_ratio=0.3):
+    """
+       The factory function for dataset prepartion.
+
+    """
     train, test = normalize_train_and_test(train_df, test_df, annot_col=annotation_col, n_genes=n_genes)
     print("[Preprocessing] Creating validation set...")
     np.random.seed(seed)
@@ -26,13 +30,16 @@ def random_partition(train_df, test_df, n_genes=978, annotation_col='nc_label', 
 
 def normalize_train_and_test(train_df, test_df, annot_col='class label', n_genes=978):
     """
-    Args
-    :param train_df: (pandas.DataFrame) training data from disk
-    :param test_df: (pandas.DataFrame) test data frame from disk
-    :param annot_col: (str) which column to be used as classification label
-    :param n_genes: (int) the length of feature vectors (e.g. for L1000 genes: 978)
+    The main function for normalization, using preprocess_df()
 
-    Returns: train, test (dict, dict): processed dataset instances, each has:
+    Args
+        :param train_df: (pandas.DataFrame) training data from disk
+        :param test_df: (pandas.DataFrame) test data frame from disk
+        :param annot_col: (str) which column to be used as classification label
+        :param n_genes: (int) the length of feature vectors (e.g. for L1000 genes: 978)
+
+    Returns:
+        train, test (dict, dict): processed dataset instances, each has:
             'value': (pandas.DataFrame) data matrix
             'full_label': (pandas.DataFrame) all the metadata information including classification annotations
             'class_annot': (numpy.ndarray) classification annotations
@@ -44,6 +51,17 @@ def normalize_train_and_test(train_df, test_df, annot_col='class label', n_genes
 
 
 def preprocess_df(df, annot_col='class label', task='untitled_set', normalize_on=None, n_genes=978):
+    """
+    The core function for data , using preprocess_df()
+
+    Args
+        :param df: (pandas.DataFrame) dataframe for preprocessing
+        :param task: Label for rach dataset instances
+        :param normalize_on: (pandas.DataFrame) Another dataframe for preprocessing used as reference,
+                                                if None use itself
+        :param n_genes: (int) the length of feature vectors (e.g. for L1000 genes: 978)
+
+    """
     print("[Preprocessing] Processing dataset {}...".format(task.upper()))
     assert df.shape[1] > n_genes  # L1000 genes
     data = df.values[:, -n_genes:].astype('float')

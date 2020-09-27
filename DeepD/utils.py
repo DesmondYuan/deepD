@@ -39,11 +39,13 @@ class Screenshot(dict):
     """
     def __init__(self, model, n_iter_buffer, verbose=2, listen_freq=50):
         """
-        :param model: (DeepD) model instance from ./model.py
-        :param n_iter_buffer: (int) moving average window width for loss
-        :param verbose: (int) verbose: 0: export model params; 1: export real time loss; 2: export model checkpoint;
+        Args:
+
+        param model: (DeepD) model instance from ./model.py
+        param n_iter_buffer: (int) moving average window width for loss
+        param verbose: (int) verbose: 0: export model params; 1: export real time loss; 2: export model checkpoint;
                                        3: export encoded tp2vecs; 4: export reconstructed data matrix
-        :param listen_freq: (int) the listening frequency (for stdout only), full loss would be saved in training.log
+        param listen_freq: (int) the listening frequency (for stdout only), full loss would be saved in training.log
         """
         # initialize loss_min
         super().__init__()
@@ -76,6 +78,7 @@ class Screenshot(dict):
             if self.verbose > v:
                 pd.DataFrame(out).to_csv('outputs/' + name + '.csv', header=None, index=None)
 
+    # noinspection PyMethodMayBeStatic
     def check_exist_params(self):
         return glob.glob("best.*.csv") != []
 
@@ -144,14 +147,17 @@ def get_metrics(logits, gold, name="DeepDCancer"):
     yhat = np.argmax(logits, axis=1)
     gold = np.argmax(gold, axis=1)
     for i in ["confusion_matrix", "roc_auc_score", "balanced_accuracy_score", "accuracy_score"]:
-        print("[Evaluation] ", i)
-        print(eval(i)(gold, yhat))
-        if i == 'confusion_matrix':
-            plt.subplots(figsize=[4, 4])
-            sns.heatmap(eval(i)(gold, yhat), cmap='viridis', annot=True, fmt="g")
-            plt.title("Confusion Matrix".format(i))
-            plt.savefig("outputs/{}.png".format(name))
-
+        print("[Evaluation] Evaluating ", i)
+        try:
+            print(eval(i)(gold, yhat))
+            if i == 'confusion_matrix':
+                plt.subplots(figsize=[4, 4])
+                sns.heatmap(eval(i)(gold, yhat), cmap='viridis', annot=True, fmt="g")
+                plt.title("Confusion Matrix".format(i))
+                plt.savefig("outputs/{}.png".format(name))
+        except ValueError:
+            print("[Evaluation] Evaluation failed on {}, potentially because it is not supported for multiple classes."
+                  .format(i))
     return yhat
 
 
@@ -162,27 +168,28 @@ def plot_reconstruction(xhat, x, zhat, y, n=100):
         print("[Utils] Due to the large # of samples, this step could take a while - "
               "you might want to consider downsampling...")
     plt_pos = np.random.choice(range(zhat.shape[0]), n)
-    plt.subplots(figsize=[18, 6])
-
-    plt.subplot(131)
+    plt.subplots(figsize=[12, 6])
+    plt.subplot(121)
     sns.kdeplot(x=x[plt_pos].flatten(), y=xhat[plt_pos].flatten(), shade=True, cmap='viridis', shade_lowest=True)
     plt.title("Reconstruction")
     plt.xlabel("Original genee expression")
     plt.ylabel("Reconstructed gene expression")
-
-    plt.subplot(132)
-    sns.histplot(x=x[plt_pos].flatten(), y=xhat[plt_pos].flatten(), bins=40, palette='viridis')
+    plt.subplot(122)
+    sns.histplot(x=x[plt_pos].flatten(), y=xhat[plt_pos].flatten(), bins=20)
     plt.title("Reconstruction")
     plt.xlabel("Original genee expression")
     plt.ylabel("Reconstructed gene expression")
+    plt.tight_layout()
+    plt.savefig("outputs/DeepT2Vec_1.png")
 
+    plt.subplots(figsize=[8, 6])
     y = np.argmax(y, axis=1)
     nclass = max(y) + 1
     for i in range(nclass):
-        plt.subplot(1, 3 * nclass, 2 * nclass + i + 1)
+        plt.subplot(1, nclass, i + 1)
         pos = np.where(y == i)
         sns.heatmap(zhat[pos], cmap='viridis')
-        plt.title("Extracted features (class: {})".format(i))
-
+        plt.title("Extracted features\n(class: {})".format(i))
     plt.tight_layout()
-    plt.savefig("outputs/DeepT2Vec.png")
+    plt.savefig("outputs/DeepT2Vec_2.png")
+

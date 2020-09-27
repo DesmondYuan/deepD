@@ -1,10 +1,14 @@
 """
-- This is the script used for fetching gene expression data from the Gene Expression database of Normal
-and Tumor tissues 2 (GENT2).
-- The GENT2 database is from the publication Park, S., Yoon, B., Kim, S. et al. GENT2: an updated gene expression
-database for normal and tumor tissues. BMC Med Genomics 12, 101 (2019). https://doi.org/10.1186/s12920-019-0514-7
-- The database SQL we used here can be accessed at http://www.appex.kr/web_download/GENT2/GENT2_dump.sql.gz
-- Preprocessed data files can be found in the ./data/ directory
+This is the main script of data preprocessing.
+For quick start, preprocessed data files can be found in the ./data/ directory and can be directly used for training.
+
+Note:
+    - Following is the script used for fetching gene expression data from the Gene Expression database of Normal
+    and Tumor tissues 2 (GENT2).
+    - The GENT2 database is from the publication Park, S., Yoon, B., Kim, S. et al. GENT2: an updated gene expression
+    database for normal and tumor tissues. BMC Med Genomics 12, 101 (2019). https://doi.org/10.1186/s12920-019-0514-7
+    - The database SQL we used here can be accessed at http://www.appex.kr/web_download/GENT2/GENT2_dump.sql.gz
+    - Preprocessed data files can be found in the ./data/ directory
 """
 
 import mysql.connector

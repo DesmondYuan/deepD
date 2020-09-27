@@ -1,3 +1,39 @@
+"""
+This is the main script of DeepD v0.1
+Developed and maintained by Xu lab at https://github.com/DesmondYuan/deepD
+For quick start, try this with python scripts/main.py -config=configs/example_GENT_NC.json
+
+The config file should include the following information
+    "expr_name": (str) Label used as folder name under results
+    "train_dataset": (str) Location of the dataset that would be further split into training set and validation set with
+                     the "validation_ratio.
+    "test_dataset": (str) Location of the withheld/test dataset.
+    "annotation_col": (str) On which column of the input data frame would a supervised model be trained to classify.
+    "validation_ratio": (float) The training/validation ratio for data partition used for "train_dataset".
+    "n_genes": (int) Number of genes from the input data.
+    "unsupervised_layers": (list) A list of layer sizes used for encoders and decoders.
+    "supervised_layers": (list) A list of layer sizes used for supervised classifier DeepDCancer.
+    "pretrain_tp2vec": (bool) Whether to perform unsupervised pretraining.
+    "plot_pretrain_results": (bool) Whether to plot the results after pretraining.
+    "train_disconnected_classifier": (bool) Whether to perform the disconnected supervised classification (DeepDCancer).
+    "train_connected_classifier": (bool) Whether to perform the connected supervised classification (DeepDcCancer).
+    "max_iteration": (int) Maximum number of iterations used for training.
+    "max_iteration_pretrain": (int) Maximum number of iterations used for pretraining.
+    n_iter_buffer (int): The moving window for eval losses during training.
+    n_iter_patience (int): How many iterations without buffered loss on validation dataset decreases would result in
+                           an earlystop in training.
+    "n_iter_patience_pretrain":How many iterations without buffered loss on validation dataset decreases would result in
+                           an earlystop in pretraining (for each layer).
+    learning_rate (float): The learning rate for Adam Optimizer. Note that we used the default beta1 and beta2 for Adam.
+    l1 (float): l1 regularization strength.
+    l2 (float): l2 regularization strength.
+    "activation": (tensorflow) Activation function for dense layers.
+    "optimizer": (tensorflow) Which optimizer would be used for training.
+    "verbose": (int) export verbose
+    "listen_freq": (int) Printing training loss for each # of iterations.
+    "pretrain_batch_size": Batch size for each iteration in pretraining.
+    "batch_size": Batch size for each iteration in training.
+"""
 import sys
 import os
 import shutil
@@ -68,7 +104,7 @@ if cfg['pretrain_tp2vec']:
                     n_iter=cfg['max_iteration'], n_iter_patience=cfg['n_iter_patience'])
     tp2vec.screenshot.save_output([z, xhat], ["Compressed_features", "Reconstruction"], require_verbose=[2, 3])
     if cfg['plot_pretrain_results']:
-        plot_reconstruction(xhat=xhat, x=test_set['value'], zhat=z, y=test_set['class_annot'], n=1000)
+        plot_reconstruction(xhat=xhat, x=test_set['value'], zhat=z, y=test_set['class_annot'], n=20)
 
 if cfg['train_disconnected_classifier']:
     print("-"*80, '\n')

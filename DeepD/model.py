@@ -1,5 +1,5 @@
 """
-This module defines main model modules
+This module is used to create DeepD model instances
 """
 import tensorflow as tf
 import numpy as np
@@ -12,10 +12,6 @@ class DeepT2vec:
     The main unsupervised DeepDT2vec model framework
     """
     def __init__(self, config):
-        """
-        :param config: (dict) training configuration
-        :param seed: (int) training random seed for both data partition (numpy), params initialization (numpy)
-        """
         self.config = config['unsupervised_layers']
         self.x = tf.compat.v1.placeholder("float", [None, self.config[0][0]], name='X')
         self.y = tf.compat.v1.placeholder("float", [None, config['supervised_layers'][-1][1]], name='Y')
@@ -117,11 +113,6 @@ class DeepDCancer:
     The main supervised DeepDCancer and DeepDcCancer diagnostic model framework
     """
     def __init__(self, tp2vec, config):
-        """
-        :param tp2vec: (deepD.DeepT2vec) a pretrained deep autoencoder (unsupervised)
-        :param config: (dict) training configuration
-        :param seed: (int) training random seed for both data partition (numpy), params initialization (numpy)
-        """
         self.config = config['supervised_layers']
         self.x = tp2vec.x
         self.y = tp2vec.y

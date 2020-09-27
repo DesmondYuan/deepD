@@ -1,3 +1,6 @@
+"""
+This module defines core training functions for DeepD
+"""
 import tensorflow as tf
 import numpy as np
 import time
@@ -9,7 +12,6 @@ def get_mse(x, xhat):
 
 
 def get_xent(x, xhat):
-    # xent = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(x, xhat))
     xent = tf.losses.softmax_cross_entropy(x, xhat)
     return xent
 
@@ -50,7 +52,7 @@ def pretrain(model, data, n_iter=1000, n_iter_patience=100):
         :param n_iter_patience: (int) tolerence of training loss no-decrease
 
     Mutates:
-        model
+        model: (Deep.DeepT2vec)
     """
 
     sess, screenshot = model.sess, model.screenshot
@@ -110,6 +112,7 @@ def train(model, optimizer_op, data, full_loss, raw_loss, output, n_iter=1000, n
         :param n_iter: (int) maximum number of iterations allowed
         :param n_iter_patience: (int) tolerence of training loss no-decrease
         :param output: (list of tf.Tensor) desired outputs tensors in a list
+        :param model_name: filename for model saving (default: 'model'). Overiden if using a low verbose.
 
     Returns
         A list of numpy.array as specified in the param "output"
