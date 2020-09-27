@@ -140,6 +140,7 @@ def md5(key):
 
 
 def get_metrics(logits, gold, name="DeepDCancer"):
+    os.makedirs("outputs", exist_ok=True)
     yhat = np.argmax(logits, axis=1)
     gold = np.argmax(gold, axis=1)
     for i in ["confusion_matrix", "roc_auc_score", "balanced_accuracy_score", "accuracy_score"]:
@@ -155,11 +156,7 @@ def get_metrics(logits, gold, name="DeepDCancer"):
 
 
 def plot_reconstruction(xhat, x, zhat, y, n=100):
-    try:
-        os.mkdir("outputs")
-    except FileExistsError:
-        pass
-
+    os.makedirs("outputs", exist_ok=True)
     print("[Utils] Plotting Tp2vec reconstruction results...")
     plt_pos = np.random.choice(range(zhat.shape[0]), n)
     plt.subplots(figsize=[18, 6])

@@ -120,7 +120,7 @@ def train(model, optimizer_op, data, full_loss, raw_loss, output, n_iter=1000, n
     x_train_gold, x_valid_gold, x_test_gold = (data[key]['value'] for key in ['train', 'valid', 'test'])
     y_train_gold, y_valid_gold, y_test_gold = (data[key]['class_annot'] for key in ['train', 'valid', 'test'])
     sampler_train, sampler_valid = (data[key]['p_sampler'] for key in ['train', 'valid'])
-    
+
     # Training on train set batches with early stopping on valid set batched
     print('[Training] Training on train set...')
     while True:

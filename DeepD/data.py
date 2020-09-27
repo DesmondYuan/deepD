@@ -16,9 +16,11 @@ def random_partition(train_df, test_df, n_genes=978, annotation_col='nc_label', 
                                  replace=False)
     train_pos = list(set(range(n_experiment_samples)) - set(valid_pos))
     valid = {'value': train['value'][valid_pos], 'full_label': train['full_label'].iloc[valid_pos],
-             'class_annot': train['class_annot'][valid_pos]}
+             'class_annot': train['class_annot'][valid_pos],
+             'p_sampler': train['p_sampler'][valid_pos]/sum(train['p_sampler'][valid_pos])}
     train = {'value': train['value'][train_pos], 'full_label': train['full_label'].iloc[train_pos],
-             'class_annot': train['class_annot'][train_pos]}
+             'class_annot': train['class_annot'][train_pos],
+             'p_sampler': train['p_sampler'][train_pos]/sum(train['p_sampler'][train_pos])}
     return train, valid, test, valid_pos
 
 
@@ -34,6 +36,7 @@ def normalize_train_and_test(train_df, test_df, annot_col='class label', n_genes
             'value': (pandas.DataFrame) data matrix
             'full_label': (pandas.DataFrame) all the metadata information including classification annotations
             'class_annot': (numpy.ndarray) classification annotations
+            'p_sampler': (numpy.ndarray) balanced sampling probability for each class
     """
     train = preprocess_df(train_df, annot_col=annot_col, task='train_set', n_genes=n_genes)
     test = preprocess_df(test_df, annot_col=annot_col, task='test_set', normalize_on=train_df, n_genes=n_genes)
