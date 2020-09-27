@@ -9,7 +9,8 @@ def get_mse(x, xhat):
 
 
 def get_xent(x, xhat):
-    xent = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(x, xhat))
+    # xent = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(x, xhat))
+    xent = tf.losses.softmax_cross_entropy(x, xhat)
     return xent
 
 
