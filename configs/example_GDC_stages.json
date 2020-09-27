@@ -1,7 +1,7 @@
 {
     "expr_name": "Example_GDC",
-    "train_dataset": "data/Dataset2_GDC.experiment.csv",
-    "test_dataset": "data/Dataset2_GDC.withheld.csv",
+    "train_dataset": "data/Dataset2_GDC_L1000.experiment.csv",
+    "test_dataset": "data/Dataset2_GDC_L1000.withheld.csv",
     "annotation_col": "Stage",
     "validation_ratio": 0.3,
     "n_genes": 978,
