@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-sys.path.append(os.path.dirname(__file__))
+sys.path.append(os.path.dirname(__file__) + '/..')
 from DeepD.model import DeepT2vec, DeepDCancer
 from DeepD.utils import md5, get_metrics, plot_reconstruction
 from DeepD.train import pretrain, train, session_setup, session_init
