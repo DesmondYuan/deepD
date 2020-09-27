@@ -8,6 +8,11 @@ def get_mse(x, xhat):
     return mse
 
 
+def get_xent(x, xhat):
+    xent = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(x, xhat))
+    return xent
+
+
 def get_loss(x, xhat, fn=get_mse, l1=0, l2=0, var_list=None):
     if var_list is None:
         var_list = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.GLOBAL_VARIABLES)

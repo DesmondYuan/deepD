@@ -4,7 +4,7 @@ This module defines main model modules
 import tensorflow as tf
 import numpy as np
 from . import utils
-from .train import get_optimizer, get_mse, get_loss
+from .train import get_optimizer, get_mse, get_xent, get_loss
 
 
 class DeepT2vec:
@@ -136,8 +136,7 @@ class DeepDCancer:
 
         self.yhat = self.build_layers()
         with tf.compat.v1.variable_scope("classifier_Loss", reuse=tf.compat.v1.AUTO_REUSE):
-            self.xent_loss, self.loss = get_loss(self.yhat, self.y,
-                                                 fn=tf.losses.softmax_cross_entropy, l1=self.l1, l2=self.l2)
+            self.xent_loss, self.loss = get_loss(self.yhat, self.y, fn=get_xent, l1=self.l1, l2=self.l2)
 
         self.optimizer_op_disconnected = get_optimizer(
             self.loss, self.lr, scope="DeepDCancer_opt", optimizer=config['optimizer'],
