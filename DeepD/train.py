@@ -12,7 +12,7 @@ def get_mse(x, xhat):
 
 
 def get_xent(x, xhat):
-    xent = tf.losses.softmax_cross_entropy(x, xhat)
+    xent = tf.compat.v1.losses.softmax_cross_entropy(x, xhat)
     return xent
 
 
@@ -32,7 +32,7 @@ def session_setup():
     sess = tf.compat.v1.Session()
     for i in tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.GLOBAL_VARIABLES, scope='initialization'):
         print(i)
-    tf.summary.FileWriter("tensorboard", sess.graph)
+    tf.compat.v1.summary.FileWriter("tensorboard", sess.graph)
     return sess, saver
 
 
@@ -94,7 +94,7 @@ def pretrain(model, data, n_iter=1000, n_iter_patience=100):
         print('[Training] Saving pre-train results at layer {}...'.format(k + 1))
         screenshot.save_model("models/Tp2vec_layer_wise_retrain.ckpt")
         screenshot.save_params()
-        sess.run(tf.variables_initializer(opt_op[0].variables()))  # refresh optimizer states
+        sess.run(tf.compat.v1.variables_initializer(opt_op[0].variables()))  # refresh optimizer states
         screenshot.reset()  # refresh best_loss saved in screenshot
 
 

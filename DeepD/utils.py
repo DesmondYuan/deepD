@@ -170,7 +170,7 @@ def plot_reconstruction(xhat, x, zhat, y, n=100):
     plt_pos = np.random.choice(range(zhat.shape[0]), n)
     plt.subplots(figsize=[12, 6])
     plt.subplot(121)
-    sns.kdeplot(x=x[plt_pos].flatten(), y=xhat[plt_pos].flatten(), shade=True, cmap='viridis', shade_lowest=True)
+    sns.kdeplot(x=x[plt_pos].flatten(), y=xhat[plt_pos].flatten(), shade=True, cmap='viridis', thresh=0)
     plt.title("Reconstruction")
     plt.xlabel("Original genee expression")
     plt.ylabel("Reconstructed gene expression")
